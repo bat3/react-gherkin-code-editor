@@ -1,4 +1,4 @@
-import React, { forwardRef, type HTMLAttributes, useImperativeHandle } from "react";
+import { forwardRef, type HTMLAttributes, useImperativeHandle } from "react";
 import { useRef, useState, useEffect } from "react";
 import { Editor as EditorClass } from "../lib/Editor";
 

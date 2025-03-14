@@ -1,5 +1,5 @@
 import React, { useRef } from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import { type EditorExposeMethods, Editor } from "./components/Editor";
 
 const defaultGherkin = [
@@ -42,11 +42,11 @@ const Page = () => {
   )
 }
 
-ReactDOM.render(
-  <React.StrictMode>
-    <Page />
-  </React.StrictMode>,
-  document.getElementById("root")
-);
+const rootElement = document.getElementById("root");
+if (!rootElement) throw new Error("Root element not found");
+const root = createRoot(rootElement);
+root.render(
+  <Page />);
+
 
 

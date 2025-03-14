@@ -76,7 +76,6 @@ export function formatGherkinString(line: string): string {
   const keywordsLevel1 = ['Feature:',];
   const keywordsLevel2 = ['Scenario:', 'Scenario Outline:', '@'];
   const keywordsLevel3 = ['Given', 'When', 'Then', 'And', 'But', 'Background:', 'Examples:', '@'];
-  const keywordsLevel4 = ['|'];
 
   const startsWithKeywordsLevel1 = keywordsLevel1.some(keyword =>
     line.includes(keyword)
