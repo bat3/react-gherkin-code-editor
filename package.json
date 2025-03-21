@@ -1,7 +1,8 @@
 {
 	"name": "react-gherkin-code-editor",
 	"version": "1.2.0",
-	"description": "A react gherkin code editor",
+	"description": "React gherkin code editor is a tool designed to write and format Gherkin features and scenarios. The editor is based on Monaco editor.",
+	"homepage": "https://github.com/bat3/react-gherkin-code-editor",
 	"main": "dist/index.js",
 	"module": "dist/index.mjs",
 	"types": "dist/index.d.ts",
