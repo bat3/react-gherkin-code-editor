@@ -50,7 +50,6 @@ const EditorComponent = () => {
 };
 ```
 
-
 ## Contributing
 
 To install the project dependencies, run:
@@ -68,6 +67,9 @@ This project uses the following npm scripts:
 - `npm login`: Login with npm user account
 - `npm run build`: Compiles TypeScript and builds the project for production
 - `npm publish`: Publish the package in npm
+
+## Demo
+See https://www.gherkineditor.online/ web site.
 
 ## License
 Released under the AGPL-3.0-or-later License.
