@@ -1,59 +1,58 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { formatGherkinLines } from "./formatterHelpers";
 import * as monaco2 from "monaco-editor";
-
+import { GherkinMonacoTokenAdapter } from "./GherkinMonacoTokenAdapter";
+import type { SupportedGherkinLanguage, TokenName } from "./Gherkin";
 export class Editor {
 	editor: monaco.editor.IStandaloneCodeEditor;
+	private tokensProvider: monaco.IDisposable | null = null;
+	private documentFormattingEditProvider: monaco.IDisposable | null = null;
+	private onTypeFormattingEditProvider: monaco.IDisposable | null = null;
+	private tokens: [RegExp, TokenName][];
+	private gherkinLanguage: SupportedGherkinLanguage;
+	private gherkinMonacoTokenAdapter: GherkinMonacoTokenAdapter;
 
 	constructor(elementRef: HTMLDivElement, code?: string) {
+		this.tokens = [];
 		monaco2.languages.typescript;
+		this.gherkinMonacoTokenAdapter = new GherkinMonacoTokenAdapter();
 		this.registerLanguages();
+		this.gherkinLanguage = "en";
+		this.setGherkinLanguage("en");
 		this.defineThemes();
 		this.addAutoComplete();
-
-		function formatMySpecialLanguage(model: monaco.editor.ITextModel) {
-			// Get all lines from the editor
-			const linesContent = model.getLinesContent();
-			const formattedLines = formatGherkinLines(linesContent);
-
-			// Return the formatting edit
-			return [
-				{
-					range: {
-						endColumn: model.getLineMaxColumn(model.getLineCount() - 1),
-						endLineNumber: model.getLineCount(),
-						startColumn: 0,
-						startLineNumber: 0,
-					},
-					text: formattedLines.join("\n"),
-				},
-			];
-		}
-
-		// Register formatter of gherkin on specific char
-		monaco.languages.registerDocumentFormattingEditProvider(
-			"GherkinLanguage-en",
-			{
-				provideDocumentFormattingEdits: formatMySpecialLanguage,
-			},
-		);
-
-		// Register formatter of gherkin
-		monaco.languages.registerOnTypeFormattingEditProvider(
-			"GherkinLanguage-en",
-			{
-				autoFormatTriggerCharacters: ["|"],
-				provideOnTypeFormattingEdits: formatMySpecialLanguage,
-			},
-		);
 
 		this.editor = monaco.editor.create(elementRef, {
 			theme: "defaultLightTheme",
 			formatOnType: true,
 			value: code,
-			language: "GherkinLanguage-en",
+			language: "GherkinLanguage",
 		});
 	}
+
+	private formatMySpecialLanguage = (model: monaco.editor.ITextModel) => {
+		// Get all lines from the editor
+		const linesContent = model.getLinesContent();
+		const formattedLines = formatGherkinLines(
+			linesContent,
+			this.gherkinMonacoTokenAdapter.getGherkinLanguageKeywords(
+				this.gherkinLanguage,
+			),
+		);
+
+		// Return the formatting edit
+		return [
+			{
+				range: {
+					endColumn: model.getLineMaxColumn(model.getLineCount() - 1),
+					endLineNumber: model.getLineCount(),
+					startColumn: 0,
+					startLineNumber: 0,
+				},
+				text: formattedLines.join("\n"),
+			},
+		];
+	};
 
 	public format() {
 		this.editor?.getAction("editor.action.formatDocument")?.run();
@@ -70,26 +69,90 @@ export class Editor {
 	}
 
 	private registerLanguages() {
-		// Register a new language
-		monaco.languages.register({ id: "GherkinLanguage-en" });
+		// Register Gherkin language
+		monaco.languages.register({ id: "GherkinLanguage" });
+	}
+
+	private unregisterDocumentFormattingEditProvider() {
+		if (this.documentFormattingEditProvider) {
+			this.documentFormattingEditProvider.dispose();
+			this.documentFormattingEditProvider = null;
+		}
+	}
+
+	private unregisterOnTypeFormattingEditProvider() {
+		if (this.onTypeFormattingEditProvider) {
+			this.onTypeFormattingEditProvider.dispose();
+			this.onTypeFormattingEditProvider = null;
+		}
+	}
+
+	private unregisterTokensProvider() {
+		if (this.tokensProvider) {
+			this.tokensProvider.dispose();
+			this.tokensProvider = null;
+		}
+	}
+
+	public setGherkinLanguage(language: SupportedGherkinLanguage) {
+		// First Language providers
+		this.unregisterTokensProvider();
+		this.unregisterDocumentFormattingEditProvider();
+		this.unregisterOnTypeFormattingEditProvider();
+
+		// Register the new provider
+		this.tokens = this.gherkinMonacoTokenAdapter.getTokens(language);
 
 		// Register a tokens provider for the language
-		monaco.languages.setMonarchTokensProvider("GherkinLanguage-en", {
-			tokenizer: {
-				root: [
-					[/Feature:/, "Feature-keyword"],
-					[/\@.*/, "tag-keyword"],
-					[/Scenario:/, "Scenario-keyword"],
-					[/Scenario Outline:/, "ScenarioOutline-keyword"],
-					[/Given( |$)/, "Given-keyword"],
-					[/When( |$)/, "When-keyword"],
-					[/Then( |$)/, "Then-keyword"],
-					[/And( |$)/, "And-keyword"],
-					[/<.*?>/, "DelimitedParameters-keyword"],
-					[/Examples:/, "Examples-keyword"],
-				],
+		this.tokensProvider = monaco.languages.setMonarchTokensProvider(
+			"GherkinLanguage",
+			{
+				tokenizer: {
+					root: this.tokens,
+				},
 			},
-		});
+		);
+
+		// Register formatter of gherkin on specific char
+		this.documentFormattingEditProvider =
+			monaco.languages.registerDocumentFormattingEditProvider(
+				"GherkinLanguage",
+				{
+					provideDocumentFormattingEdits: this.formatMySpecialLanguage,
+				},
+			);
+
+		// Register formatter of gherkin
+		this.onTypeFormattingEditProvider =
+			monaco.languages.registerOnTypeFormattingEditProvider("GherkinLanguage", {
+				autoFormatTriggerCharacters: ["|"],
+				provideOnTypeFormattingEdits: this.formatMySpecialLanguage,
+			});
+
+		this.gherkinLanguage = language;
+	}
+
+	private getRules(
+		foreground?: monaco.editor.ITokenThemeRule["foreground"],
+		background?: monaco.editor.ITokenThemeRule["background"],
+		fontStyle?: monaco.editor.ITokenThemeRule["fontStyle"],
+	): monaco.editor.ITokenThemeRule[] {
+		const rules: {
+			token: TokenName;
+			foreground: monaco.editor.ITokenThemeRule["foreground"];
+			background: monaco.editor.ITokenThemeRule["background"];
+			fontStyle: monaco.editor.ITokenThemeRule["fontStyle"];
+		}[] = [];
+
+		for (const element of this.tokens) {
+			rules.push({
+				token: `${element[1]}`,
+				foreground: foreground,
+				background: background,
+				fontStyle: fontStyle,
+			});
+		}
+		return rules;
 	}
 
 	private defineThemes() {
@@ -97,38 +160,7 @@ export class Editor {
 		monaco.editor.defineTheme("defaultLightTheme", {
 			base: "vs",
 			inherit: false,
-			rules: [
-				{
-					token: "Feature-keyword",
-					foreground: "7dd956",
-					fontStyle: "bold",
-				},
-				{ token: "tag-keyword", foreground: "7dd956", fontStyle: "italic" },
-				{
-					token: "Scenario-keyword",
-					foreground: "7dd956",
-					fontStyle: "bold",
-				},
-				{
-					token: "ScenarioOutline-keyword",
-					foreground: "7dd956",
-					fontStyle: "bold",
-				},
-				{ token: "Given-keyword", foreground: "7dd956", fontStyle: "bold" },
-				{ token: "When-keyword", foreground: "7dd956", fontStyle: "bold" },
-				{ token: "Then-keyword", foreground: "7dd956", fontStyle: "bold" },
-				{ token: "And-keyword", foreground: "7dd956", fontStyle: "bold" },
-				{
-					token: "DelimitedParameters-keyword",
-					foreground: "7dd956",
-					fontStyle: "bold",
-				},
-				{
-					token: "Examples-keyword",
-					foreground: "7dd956",
-					fontStyle: "bold",
-				},
-			],
+			rules: this.getRules("7dd956", undefined, "bold"),
 			colors: {
 				"editor.foreground": "#000000",
 			},
@@ -137,38 +169,7 @@ export class Editor {
 		monaco.editor.defineTheme("defaultDarkTheme", {
 			base: "vs-dark",
 			inherit: false,
-			rules: [
-				{
-					token: "Feature-keyword",
-					foreground: "7dd956",
-					fontStyle: "bold",
-				},
-				{ token: "tag-keyword", foreground: "7dd956", fontStyle: "italic" },
-				{
-					token: "Scenario-keyword",
-					foreground: "7dd956",
-					fontStyle: "bold",
-				},
-				{
-					token: "ScenarioOutline-keyword",
-					foreground: "7dd956",
-					fontStyle: "bold",
-				},
-				{ token: "Given-keyword", foreground: "7dd956", fontStyle: "bold" },
-				{ token: "When-keyword", foreground: "7dd956", fontStyle: "bold" },
-				{ token: "Then-keyword", foreground: "7dd956", fontStyle: "bold" },
-				{ token: "And-keyword", foreground: "7dd956", fontStyle: "bold" },
-				{
-					token: "DelimitedParameters-keyword",
-					foreground: "7dd956",
-					fontStyle: "bold",
-				},
-				{
-					token: "Examples-keyword",
-					foreground: "7dd956",
-					fontStyle: "bold",
-				},
-			],
+			rules: this.getRules("7dd956", undefined, "bold"),
 			colors: {
 				"editor.foreground": "#ffffff",
 			},
@@ -242,7 +243,7 @@ export class Editor {
 			];
 		}
 
-		monaco.languages.registerCompletionItemProvider("GherkinLanguage-en", {
+		monaco.languages.registerCompletionItemProvider("GherkinLanguage", {
 			provideCompletionItems: (model, position) => {
 				const word = model.getWordUntilPosition(position);
 				const range = {

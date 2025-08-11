@@ -1,6 +1,7 @@
 import { forwardRef, type HTMLAttributes, useImperativeHandle } from "react";
 import { useRef, useState, useEffect } from "react";
 import { Editor as EditorClass } from "../lib/Editor";
+import type { SupportedGherkinLanguage } from "../lib/Gherkin";
 
 export type EditorProps = {
 	code?: string;
@@ -10,6 +11,7 @@ export interface EditorExposeMethods {
 	format: () => void;
 	updateTheme: () => void;
 	getCode: () => string;
+	setGherkinLanguage: (language: SupportedGherkinLanguage) => void;
 }
 
 export const Editor = forwardRef<EditorExposeMethods, EditorProps>(
@@ -41,10 +43,15 @@ export const Editor = forwardRef<EditorExposeMethods, EditorProps>(
 			return editor?.getCode() ?? "";
 		};
 
+		const setGherkinLanguage = (language: SupportedGherkinLanguage) => {
+			editor?.setGherkinLanguage(language);
+		};
+
 		useImperativeHandle(ref, () => ({
 			format,
 			updateTheme,
 			getCode,
+			setGherkinLanguage,
 		}));
 
 		return <div {...props} ref={divEditorRef} />;
