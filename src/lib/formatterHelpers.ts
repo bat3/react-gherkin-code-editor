@@ -4,43 +4,59 @@
  * @returns Array of formatted strings
  */
 export function formatGherkinLines(lines: string[]): string[] {
-  let isInExamplesTable = false;
-  let tableLines: string[] = [];
-  const formattedLines: string[] = [];
+	let isInExamplesTable = false;
+	let tableLines: string[] = [];
+	const formattedLines: string[] = [];
+	let isInScenario = false;
 
-  // For each line in the input array
-  for (let i = 0; i < lines.length; i++) {
-    const line = removeMultipleSpaces(lines[i].trim());
+	// For each line in the input array
+	for (let i = 0; i < lines.length; i++) {
+		const line = removeMultipleSpaces(lines[i].trim());
 
-    // Check if we're entering an Examples section
-    if (line.toLowerCase().startsWith('examples:')) {
-      isInExamplesTable = true;
-      formattedLines.push(formatGherkinString(line));
-      continue;
-    }
+		// Check if we're entering an Examples section
+		if (line.toLowerCase().startsWith("examples:")) {
+			isInExamplesTable = true;
+			formattedLines.push(formatGherkinString(line, isInScenario));
+			continue;
+		}
 
-    // Handle table lines
-    if (isInExamplesTable && line.includes('|')) {
-      tableLines.push(formatGherkinString(line));
+		// Check if we're entering a scenario
+		if (line.toLowerCase().startsWith("scenario")) {
+			isInScenario = true;
+			formattedLines.push(formatGherkinString(line, isInScenario));
+			continue;
+		}
 
-      // If next line doesn't have a pipe or we're at the end, format the collected table
-      if (i === lines.length - 1 || !lines[i + 1].includes('|')) {
-        const formattedTable = formatTable(tableLines);
-        formattedLines.push(...formattedTable);
-        tableLines = [];
-        isInExamplesTable = false;
-      }
-    } else {
-      // Normal line formatting
-      if (line.length > 0) {
-        formattedLines.push(formatGherkinString(line));
-      } else {
-        formattedLines.push('');
-      }
-    }
-  }
+		// Check if we're leaving a scenario (new feature or scenario)
+		if (
+			line.toLowerCase().startsWith("feature:") ||
+			(line.toLowerCase().startsWith("scenario") && isInScenario)
+		) {
+			isInScenario = false;
+		}
 
-  return formattedLines;
+		// Handle table lines
+		if (isInExamplesTable && line.includes("|")) {
+			tableLines.push(formatGherkinString(line, isInScenario));
+
+			// If next line doesn't have a pipe or we're at the end, format the collected table
+			if (i === lines.length - 1 || !lines[i + 1].includes("|")) {
+				const formattedTable = formatTable(tableLines);
+				formattedLines.push(...formattedTable);
+				tableLines = [];
+				isInExamplesTable = false;
+			}
+		} else {
+			// Normal line formatting
+			if (line.length > 0) {
+				formattedLines.push(formatGherkinString(line, isInScenario));
+			} else {
+				formattedLines.push("");
+			}
+		}
+	}
+
+	return formattedLines;
 }
 
 /**
@@ -49,72 +65,75 @@ export function formatGherkinLines(lines: string[]): string[] {
  * @returns Array of formatted table lines
  */
 function formatTable(tableLines: string[]): string[] {
-  if (tableLines.length === 0) return [];
+	if (tableLines.length === 0) return [];
 
-  // Split each line into cells and trim them
-  const rows = tableLines.map(line =>
-    line.split('|')
-      .map(cell => cell.trim())
-      .filter(cell => cell.length > 0)
-  );
+	// Split each line into cells and trim them
+	const rows = tableLines.map((line) =>
+		line
+			.split("|")
+			.map((cell) => cell.trim())
+			.filter((cell) => cell.length > 0),
+	);
 
-  // Find the maximum width for each column
-  const columnWidths = rows[0].map((_, colIndex) => {
-    return Math.max(...rows.map(row => row[colIndex]?.length || 0));
-  });
+	// Find the maximum width for each column
+	const columnWidths = rows[0].map((_, colIndex) => {
+		return Math.max(...rows.map((row) => row[colIndex]?.length || 0));
+	});
 
-  // Format each row
-  return rows.map(row => {
-    const formattedCells = row.map((cell, index) => {
-      return cell.padEnd(columnWidths[index]);
-    });
-    return `\t\t\t| ${formattedCells.join(' | ')} |`
-  });
+	// Format each row
+	return rows.map((row) => {
+		const formattedCells = row.map((cell, index) => {
+			return cell.padEnd(columnWidths[index]);
+		});
+		return `\t\t\t| ${formattedCells.join(" | ")} |`;
+	});
 }
 
-export function formatGherkinString(line: string): string {
-  const keywordsLevel1 = ['Feature:',];
-  const keywordsLevel2 = ['Scenario:', 'Scenario Outline:', '@'];
-  const keywordsLevel3 = ['Given', 'When', 'Then', 'And', 'But', 'Background:', 'Examples:', '@'];
+export function formatGherkinString(
+	line: string,
+	isInScenario = false,
+): string {
+	const keywordsLevel1 = ["Feature:"];
+	const keywordsLevel2 = ["Scenario:", "Scenario Outline:", "@"];
+	const keywordsLevel3 = ["Background:", "Examples:", "@"];
+	const keywordsLevel4 = ["Given", "When", "Then", "And", "But"];
 
-  const startsWithKeywordsLevel1 = keywordsLevel1.some(keyword =>
-    line.includes(keyword)
-  );
+	const startsWithKeywordsLevel1 = keywordsLevel1.some((keyword) =>
+		line.includes(keyword),
+	);
 
-  if (startsWithKeywordsLevel1) {
-    return line.trim();
-  }
+	if (startsWithKeywordsLevel1) {
+		return line.trim();
+	}
 
-  const startsWithKeywordsLevel2 = keywordsLevel2.some(keyword =>
-    line.includes(keyword)
-  );
+	const startsWithKeywordsLevel2 = keywordsLevel2.some((keyword) =>
+		line.includes(keyword),
+	);
 
-  if (startsWithKeywordsLevel2) {
-    return `\t${line.trim()}`
-  }
+	if (startsWithKeywordsLevel2) {
+		return `\t${line.trim()}`;
+	}
 
+	const startsWithKeywordsLevel3 = keywordsLevel3.some((keyword) =>
+		line.includes(keyword),
+	);
 
-  const startsWithKeywordsLevel3 = keywordsLevel3.some(keyword =>
-    line.includes(keyword)
-  );
+	if (startsWithKeywordsLevel3) {
+		return `\t\t${line.trim()}`;
+	}
 
-  if (startsWithKeywordsLevel3) {
-    return `\t\t${line.trim()}`
-  }
+	const startsWithKeywordsLevel4 = keywordsLevel4.some((keyword) =>
+		line.includes(keyword),
+	);
 
-  const startsWithKeywordsLevel4 = keywordsLevel3.some(keyword =>
-    line.includes(keyword)
-  );
+	if (startsWithKeywordsLevel4) {
+		// If we're in a scenario context, use level 3 indentation, otherwise no indentation
+		return isInScenario ? `\t\t${line.trim()}` : line.trim();
+	}
 
-  if (startsWithKeywordsLevel4) {
-    return `\t\t\t${line.trim()}`
-  }
-
-  return line;
+	return line;
 }
 
 export function removeMultipleSpaces(line: string) {
-  return line.replace(/\s+/g, " ");
+	return line.replace(/\s+/g, " ");
 }
-
-
