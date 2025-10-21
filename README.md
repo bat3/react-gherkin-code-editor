@@ -62,6 +62,7 @@ This project uses the following npm scripts:
 
 - `npm run dev`: Starts the development server using Vite
 - `npm run build`: Compiles TypeScript and builds the project for production
+- `npm run test`: Launch tests
 
 ## Publish
 - `npm login`: Login with npm user account
