@@ -16,11 +16,23 @@ export class Editor {
 			const linesContent = model.getLinesContent();
 			const formattedLines = formatGherkinLines(linesContent);
 
+			// Find the line with the maximum column count
+			let maxColumnLineNumber = 0;
+			let maxColumnCount = 0;
+
+			for (let i = 1; i <= model.getLineCount(); i++) {
+				const lineMaxColumn = model.getLineMaxColumn(i);
+				if (lineMaxColumn > maxColumnCount) {
+					maxColumnCount = lineMaxColumn;
+					maxColumnLineNumber = i;
+				}
+			}
+
 			// Return the formatting edit
 			return [
 				{
 					range: {
-						endColumn: model.getLineMaxColumn(model.getLineCount() - 1),
+						endColumn: model.getLineMaxColumn(maxColumnLineNumber),
 						endLineNumber: model.getLineCount(),
 						startColumn: 0,
 						startLineNumber: 0,
@@ -52,6 +64,7 @@ export class Editor {
 			formatOnType: true,
 			value: code,
 			language: "GherkinLanguage-en",
+			acceptSuggestionOnEnter: "off",
 		});
 	}
 
