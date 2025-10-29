@@ -82,6 +82,10 @@ export class Editor {
 		return this.editor.getValue();
 	}
 
+	public layout() {
+		this.editor.layout();
+	}
+
 	private registerLanguages() {
 		// Register a new language
 		monaco.languages.register({ id: "GherkinLanguage-en" });

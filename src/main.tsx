@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { type EditorExposeMethods, Editor } from "./components/Editor";
 
@@ -55,38 +55,48 @@ const defaultGherkin = [
 
 const Page = () => {
 	const editorRef = useRef<EditorExposeMethods>(null);
+	const [isBig, setIsBig] = useState<boolean>(true);
 	return (
-		<div>
-			<main>
-				<h3>Give me a Gherkin</h3>
-				<Editor
-					style={{ width: "700px", height: "500px" }}
-					ref={editorRef}
-					code={defaultGherkin}
-				/>
-				<input
-					type="button"
-					value="Format my Gherkin !"
-					onClick={() => {
-						editorRef.current?.format();
-					}}
-				/>
-				<input
-					type="button"
-					value="Dark"
-					onClick={() => {
-						editorRef.current?.updateTheme();
-					}}
-				/>
-				<input
-					type="button"
-					value="copy to clipboard"
-					onClick={() => {
-						navigator.clipboard.writeText(editorRef.current?.getCode() ?? "");
-					}}
-				/>
-			</main>
-		</div>
+		<main style={{ height: "70vh" }}>
+			<h3>Give me a Gherkin</h3>
+			<Editor
+				style={{
+					width: isBig ? "100%" : "350px",
+					height: isBig ? "100%" : "250px",
+					border: "1px solid rgb(0, 0, 0)",
+				}}
+				ref={editorRef}
+				code={defaultGherkin}
+			/>
+			<input
+				type="button"
+				value="Format my Gherkin !"
+				onClick={() => {
+					editorRef.current?.format();
+				}}
+			/>
+			<input
+				type="button"
+				value="Dark"
+				onClick={() => {
+					editorRef.current?.updateTheme();
+				}}
+			/>
+			<input
+				type="button"
+				value="copy to clipboard"
+				onClick={() => {
+					navigator.clipboard.writeText(editorRef.current?.getCode() ?? "");
+				}}
+			/>
+			<input
+				type="button"
+				value="Toggle size"
+				onClick={() => {
+					setIsBig(!isBig);
+				}}
+			/>
+		</main>
 	);
 };
 

@@ -10,6 +10,7 @@ export interface EditorExposeMethods {
 	format: () => void;
 	updateTheme: () => void;
 	getCode: () => string;
+	layout: () => void;
 }
 
 export const Editor = forwardRef<EditorExposeMethods, EditorProps>(
@@ -29,6 +30,21 @@ export const Editor = forwardRef<EditorExposeMethods, EditorProps>(
 			//return () => editor?.dispose();
 		}, [props.code]);
 
+		// Handle resize events
+		useEffect(() => {
+			if (!editor || !divEditorRef.current) return;
+
+			const resizeObserver = new ResizeObserver(() => {
+				editor.layout();
+			});
+
+			resizeObserver.observe(divEditorRef.current);
+
+			return () => {
+				resizeObserver.disconnect();
+			};
+		}, [editor]);
+
 		const format = () => {
 			editor?.format();
 		};
@@ -41,10 +57,15 @@ export const Editor = forwardRef<EditorExposeMethods, EditorProps>(
 			return editor?.getCode() ?? "";
 		};
 
+		const layout = () => {
+			editor?.layout();
+		};
+
 		useImperativeHandle(ref, () => ({
 			format,
 			updateTheme,
 			getCode,
+			layout,
 		}));
 
 		return <div {...props} ref={divEditorRef} />;
