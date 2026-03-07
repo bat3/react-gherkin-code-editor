@@ -8,6 +8,7 @@ export function formatGherkinLines(lines: string[]): string[] {
 	let inFeature = false;
 	let inRule = false;
 	let inScenario = false;
+	let inDocString = false;
 	let tableLines: string[] = [];
 	const formattedLines: string[] = [];
 
@@ -27,7 +28,12 @@ export function formatGherkinLines(lines: string[]): string[] {
 			inRule = false;
 			inScenario = false;
 			formattedLines.push(
-				formatGherkinString(line, { inFeature, inRule, inScenario }),
+				formatGherkinString(line, {
+					inFeature,
+					inRule,
+					inScenario,
+					inDocString,
+				}),
 			);
 			continue;
 		}
@@ -38,7 +44,12 @@ export function formatGherkinLines(lines: string[]): string[] {
 			inScenario = false;
 
 			formattedLines.push(
-				formatGherkinString(line, { inFeature, inRule, inScenario }),
+				formatGherkinString(line, {
+					inFeature,
+					inRule,
+					inScenario,
+					inDocString,
+				}),
 			);
 			continue;
 		}
@@ -47,18 +58,29 @@ export function formatGherkinLines(lines: string[]): string[] {
 		if (gherkinKeywords.Examples.some((keyword) => line.startsWith(keyword))) {
 			inExamplesTable = true;
 			formattedLines.push(
-				formatGherkinString(line, { inFeature, inRule, inScenario }),
+				formatGherkinString(line, {
+					inFeature,
+					inRule,
+					inScenario,
+					inDocString,
+				}),
 			);
 			continue;
 		}
 
 		// Any scenario/example line marks that we're inside a scenario
-		if (gherkinKeywords.Scenario.some((keyword) => line.startsWith(keyword)) ||
+		if (
+			gherkinKeywords.Scenario.some((keyword) => line.startsWith(keyword)) ||
 			gherkinKeywords.Background.some((keyword) => line.startsWith(keyword))
 		) {
 			inScenario = true;
 			formattedLines.push(
-				formatGherkinString(line, { inFeature, inRule, inScenario }),
+				formatGherkinString(line, {
+					inFeature,
+					inRule,
+					inScenario,
+					inDocString,
+				}),
 			);
 			continue;
 		}
@@ -66,7 +88,12 @@ export function formatGherkinLines(lines: string[]): string[] {
 		// Handle table rows inside an Examples block
 		if (inExamplesTable && line.includes("|")) {
 			tableLines.push(
-				formatGherkinString(line, { inFeature, inRule, inScenario }),
+				formatGherkinString(line, {
+					inFeature,
+					inRule,
+					inScenario,
+					inDocString,
+				}),
 			);
 
 			const isLastLine = i === lines.length - 1;
@@ -80,10 +107,20 @@ export function formatGherkinLines(lines: string[]): string[] {
 				inExamplesTable = false;
 			}
 		} else {
-			// Normal non-table line
+			// Normal non-table line (including doc strings)
+			// Pass current inDocString so formatGherkinString can indent correctly
 			formattedLines.push(
-				formatGherkinString(line, { inFeature, inRule, inScenario }),
+				formatGherkinString(line, {
+					inFeature,
+					inRule,
+					inScenario,
+					inDocString,
+				}),
 			);
+
+			if (gherkinKeywords.DocString.some((keyword) => line === keyword)) {
+				inDocString = !inDocString;
+			}
 		}
 	}
 
@@ -121,9 +158,10 @@ function formatTable(tableLines: string[]): string[] {
 }
 
 interface GherkinContext {
-	inFeature?: boolean;
-	inRule?: boolean;
-	inScenario?: boolean;
+	inFeature: boolean;
+	inRule: boolean;
+	inScenario: boolean;
+	inDocString: boolean;
 }
 
 
@@ -133,6 +171,30 @@ export function formatGherkinString(
 ):  string {
 
 	const trimmedLine = line.trimStart();
+
+	const baseIndentForSteps = () => {
+		if (context.inRule && context.inScenario) {
+			return 3;
+		}
+		if (context.inScenario) {
+			return 2;
+		}
+		return 0;
+	};
+
+	// Doc string delimiters and body: opening, content, and closing at step+1
+	if (gherkinKeywords.DocString.some((keyword) => trimmedLine === keyword)) {
+		const baseIndent = baseIndentForSteps();
+		const indentLevel = baseIndent + 1;
+		return `${"\t".repeat(indentLevel)}${trimmedLine}`;
+	}
+
+	// Doc string body: always one level deeper than the step
+	if (context.inDocString) {
+		const baseIndent = baseIndentForSteps();
+		const indentLevel = baseIndent + 1;
+		return `${"\t".repeat(indentLevel)}${trimmedLine}`;
+	}
 
 	// Feature
 	if (gherkinKeywords.Feature.some((keyword) => trimmedLine.startsWith(keyword))) {
