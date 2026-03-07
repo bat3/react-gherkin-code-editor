@@ -146,6 +146,100 @@ describe("formatGherkinLines", () => {
 
 		expect(formatGherkinLines(input)).toEqual(expected);
 	});
+
+	test("should format Feature with Background", () => {
+		// Test from https://cucumber.io/docs/gherkin/reference#background
+		const input = [
+			"Feature: Multiple site support",
+			"Only blog owners can post to a blog, except administrators,",
+			" who can post to all blogs.",
+			"",
+			"Background:",
+			"Given a global administrator named \"Greg\"",
+			"And a blog named \"Greg's anti-tax rants\"",
+			"And a customer named \"Dr. Bill\"",
+			"And a blog named \"Expensive Therapy\" owned by \"Dr. Bill\"",
+			"",
+			"Scenario: Dr. Bill posts to his own blog",
+			"Given I am logged in as Dr. Bill",
+			"When I try to post to \"Expensive Therapy\"",
+			"Then I should see \"Your article was published.\"",
+			"",
+			"Scenario: Dr. Bill tries to post to somebody else's blog, and fails",
+			"Given I am logged in as Dr. Bill",
+			"When I try to post to \"Greg's anti-tax rants\"",
+			"Then I should see \"Hey! That's not your blog!\"",
+		];
+
+		const expected = [
+			"Feature: Multiple site support",
+			"\tOnly blog owners can post to a blog, except administrators,",
+			"\twho can post to all blogs.",
+			"",
+			"\tBackground:",
+			"\t\tGiven a global administrator named \"Greg\"",
+			"\t\tAnd a blog named \"Greg's anti-tax rants\"",
+			"\t\tAnd a customer named \"Dr. Bill\"",
+			"\t\tAnd a blog named \"Expensive Therapy\" owned by \"Dr. Bill\"",
+			"",
+			"\tScenario: Dr. Bill posts to his own blog",
+			"\t\tGiven I am logged in as Dr. Bill",
+			"\t\tWhen I try to post to \"Expensive Therapy\"",
+			"\t\tThen I should see \"Your article was published.\"",
+			"",
+			"\tScenario: Dr. Bill tries to post to somebody else's blog, and fails",
+			"\t\tGiven I am logged in as Dr. Bill",
+			"\t\tWhen I try to post to \"Greg's anti-tax rants\"",
+			"\t\tThen I should see \"Hey! That's not your blog!\"",
+		];
+
+		expect(formatGherkinLines(input)).toEqual(expected);
+	});
+
+	test("should format Feature with Background and rule", () => {
+		// Test from https://cucumber.io/docs/gherkin/reference#background
+		const input = [
+			"Feature: Overdue tasks",
+			"Let users know when tasks are overdue, even when using other",
+			"features of the app",
+			"",
+			"Rule: Users are notified about overdue tasks on first use of the day",
+			"Background:",
+			"Given I have overdue tasks",
+			"",
+			"Example: First use of the day",
+			"Given I last used the app yesterday",
+			"When I use the app",
+			"Then I am notified about overdue tasks",
+			"",
+			"Example: Already used today",
+			"Given I last used the app earlier today",
+			"When I use the app",
+			"Then I am not notified about overdue tasks"
+		];
+
+		const expected = [
+			"Feature: Overdue tasks",
+			"\tLet users know when tasks are overdue, even when using other",
+			"\tfeatures of the app",
+			"",
+			"\tRule: Users are notified about overdue tasks on first use of the day",
+			"\t\tBackground:",
+			"\t\t\tGiven I have overdue tasks",
+			"",
+			"\t\tExample: First use of the day",
+			"\t\t\tGiven I last used the app yesterday",
+			"\t\t\tWhen I use the app",
+			"\t\t\tThen I am notified about overdue tasks",
+			"",
+			"\t\tExample: Already used today",
+			"\t\t\tGiven I last used the app earlier today",
+			"\t\t\tWhen I use the app",
+			"\t\t\tThen I am not notified about overdue tasks"
+		];
+
+		expect(formatGherkinLines(input)).toEqual(expected);
+	});
 });
 
 describe("formatGherkinString", () => {
