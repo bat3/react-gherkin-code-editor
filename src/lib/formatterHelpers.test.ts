@@ -97,6 +97,55 @@ describe("formatGherkinLines", () => {
 
 		expect(formatGherkinLines(input)).toEqual(expected);
 	});
+
+	test("should format Feature with Rules", () => {
+		// Test from https://cucumber.io/docs/gherkin/reference#rule
+		const input = [
+			"# -- FILE: features/gherkin.rule_example.feature",
+			"Feature: Highlander",
+			"",
+  			"Rule: There can be only One",
+			"",
+			"Example: Only One -- More than one alive",
+			"Given there are 3 ninjas",
+			"And there are more than one ninja alive",
+			"When 2 ninjas meet, they will fight",
+			"Then one ninja dies (but not me)",
+			"And there is one ninja less alive",
+			"",
+			"Example: Only One -- One alive",
+			"Given there is only 1 ninja alive",
+			"Then they will live forever ;-)",
+			"",
+  			"Rule: There can be Two (in some cases)",
+			"",
+    		"Example: Two -- Dead and Reborn as Phoenix",
+		];
+
+		const expected = [
+			"# -- FILE: features/gherkin.rule_example.feature",
+			"Feature: Highlander",
+			"",
+  			"\tRule: There can be only One",
+			"",
+			"\t\tExample: Only One -- More than one alive",
+			"\t\t\tGiven there are 3 ninjas",
+			"\t\t\tAnd there are more than one ninja alive",
+			"\t\t\tWhen 2 ninjas meet, they will fight",
+			"\t\t\tThen one ninja dies (but not me)",
+			"\t\t\tAnd there is one ninja less alive",
+			"",
+			"\t\tExample: Only One -- One alive",
+			"\t\t\tGiven there is only 1 ninja alive",
+			"\t\t\tThen they will live forever ;-)",
+			"",
+  			"\tRule: There can be Two (in some cases)",
+			"",
+    		"\t\tExample: Two -- Dead and Reborn as Phoenix",
+		];
+
+		expect(formatGherkinLines(input)).toEqual(expected);
+	});
 });
 
 describe("formatGherkinString", () => {
