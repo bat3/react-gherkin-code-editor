@@ -72,6 +72,31 @@ describe("formatGherkinLines", () => {
 
 		expect(formatGherkinLines(input)).toEqual(expected);
 	});
+
+	test("should format Feature with description", () => {
+		// Test from https://cucumber.io/docs/gherkin/reference#feature
+		const input = [
+			"Feature: Guess the word",
+			"",
+			"The word guess game is a turn-based game for two players.",
+			"The Maker makes a word for the Breaker to guess. The game",
+			"is over when the Breaker guesses the Maker's word.",
+			"",
+			"Example: Maker starts a game",
+		];
+
+		const expected = [
+			"Feature: Guess the word",
+			"",
+			"\tThe word guess game is a turn-based game for two players.",
+			"\tThe Maker makes a word for the Breaker to guess. The game",
+			"\tis over when the Breaker guesses the Maker's word.",
+			"",
+			"\tExample: Maker starts a game",
+		];
+
+		expect(formatGherkinLines(input)).toEqual(expected);
+	});
 });
 
 describe("formatGherkinString", () => {

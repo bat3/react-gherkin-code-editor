@@ -5,9 +5,10 @@ import { gherkinKeywords } from "./Gherkin";
  */
 export function formatGherkinLines(lines: string[]): string[] {
 	let inExamplesTable = false;
+	let inFeature = false;
+	let inScenario = false;
 	let tableLines: string[] = [];
 	const formattedLines: string[] = [];
-	let inScenario = false;
 
 	for (let i = 0; i < lines.length; i++) {
 		const rawLine = lines[i];
@@ -16,6 +17,14 @@ export function formatGherkinLines(lines: string[]): string[] {
 		// Preserve empty lines
 		if (line.length === 0) {
 			formattedLines.push("");
+			continue;
+		}
+
+		// New feature: reset context and keep the line as-is
+		if (line.startsWith(gherkinKeywords.Feature[0])) {
+			inFeature = true;
+			inScenario = false;
+			formattedLines.push(formatGherkinString(line, inScenario));
 			continue;
 		}
 
@@ -31,11 +40,6 @@ export function formatGherkinLines(lines: string[]): string[] {
 			inScenario = true;
 			formattedLines.push(formatGherkinString(line, inScenario));
 			continue;
-		}
-
-		// A new feature line ends the current scenario
-		if (line.startsWith(gherkinKeywords.Feature[0])) {
-			inScenario = false;
 		}
 
 		// Handle table rows inside an Examples block
@@ -54,7 +58,19 @@ export function formatGherkinLines(lines: string[]): string[] {
 			}
 		} else {
 			// Normal non-table line
-			formattedLines.push(formatGherkinString(line, inScenario));
+			if (inFeature && !inScenario && !inExamplesTable) {
+				// Lines directly under a Feature are considered description.
+				// If the formatter doesn't apply any special indentation,
+				// indent them once to match expected output.
+				const formatted = formatGherkinString(line, inScenario);
+				if (formatted === line) {
+					formattedLines.push(`\t${line}`);
+				} else {
+					formattedLines.push(formatted);
+				}
+			} else {
+				formattedLines.push(formatGherkinString(line, inScenario));
+			}
 		}
 	}
 
