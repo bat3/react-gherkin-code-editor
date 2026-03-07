@@ -1,58 +1,60 @@
+import { gherkinKeywords } from "./Gherkin";
+
 /**
- * Formats an array of Gherkin strings with special handling for Examples tables
- * @param lines - Array of Gherkin strings to format
- * @returns Array of formatted strings
+ * Formats an array of Gherkin strings with special handling for Examples tables.
  */
 export function formatGherkinLines(lines: string[]): string[] {
-	let isInExamplesTable = false;
+	let inExamplesTable = false;
 	let tableLines: string[] = [];
 	const formattedLines: string[] = [];
-	let isInScenario = false;
+	let inScenario = false;
 
-	// For each line in the input array
 	for (let i = 0; i < lines.length; i++) {
-		const line = removeMultipleSpaces(lines[i].trim());
+		const rawLine = lines[i];
+		const line = removeMultipleSpaces(rawLine.trim());
 
-		// Check if we're entering an Examples section
-		if (line.toLowerCase().startsWith("examples:")) {
-			isInExamplesTable = true;
-			formattedLines.push(formatGherkinString(line, isInScenario));
+		// Preserve empty lines
+		if (line.length === 0) {
+			formattedLines.push("");
 			continue;
 		}
 
-		// Check if we're entering a scenario
-		if (line.toLowerCase().startsWith("scenario")) {
-			isInScenario = true;
-			formattedLines.push(formatGherkinString(line, isInScenario));
+		// Examples header starts a table block
+		if (line.startsWith(gherkinKeywords.Examples[0])) {
+			inExamplesTable = true;
+			formattedLines.push(formatGherkinString(line, inScenario));
 			continue;
 		}
 
-		// Check if we're leaving a scenario (new feature or scenario)
-		if (
-			line.toLowerCase().startsWith("feature:") ||
-			(line.toLowerCase().startsWith("scenario") && isInScenario)
-		) {
-			isInScenario = false;
+		// Any scenario line marks that we're inside a scenario
+		if (line.startsWith(gherkinKeywords.Scenario[0])) {
+			inScenario = true;
+			formattedLines.push(formatGherkinString(line, inScenario));
+			continue;
 		}
 
-		// Handle table lines
-		if (isInExamplesTable && line.includes("|")) {
-			tableLines.push(formatGherkinString(line, isInScenario));
+		// A new feature line ends the current scenario
+		if (line.startsWith(gherkinKeywords.Feature[0])) {
+			inScenario = false;
+		}
 
-			// If next line doesn't have a pipe or we're at the end, format the collected table
-			if (i === lines.length - 1 || !lines[i + 1].includes("|")) {
+		// Handle table rows inside an Examples block
+		if (inExamplesTable && line.includes("|")) {
+			tableLines.push(formatGherkinString(line, inScenario));
+
+			const isLastLine = i === lines.length - 1;
+			const nextLineHasPipe = !isLastLine && lines[i + 1].includes("|");
+
+			// Last row of the table: format and flush
+			if (isLastLine || !nextLineHasPipe) {
 				const formattedTable = formatTable(tableLines);
 				formattedLines.push(...formattedTable);
 				tableLines = [];
-				isInExamplesTable = false;
+				inExamplesTable = false;
 			}
 		} else {
-			// Normal line formatting
-			if (line.length > 0) {
-				formattedLines.push(formatGherkinString(line, isInScenario));
-			} else {
-				formattedLines.push("");
-			}
+			// Normal non-table line
+			formattedLines.push(formatGherkinString(line, inScenario));
 		}
 	}
 
