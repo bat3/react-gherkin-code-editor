@@ -22,7 +22,7 @@ export function formatGherkinLines(lines: string[]): string[] {
 		}
 
 		// New feature: reset context
-		if (line.startsWith(gherkinKeywords.Feature[0])) {
+		if (gherkinKeywords.Feature.some((keyword) => line.startsWith(keyword))) {
 			inFeature = true;
 			inRule = false;
 			inScenario = false;
@@ -33,7 +33,7 @@ export function formatGherkinLines(lines: string[]): string[] {
 		}
 
 		// Rule lines under a feature
-		if (line.startsWith(gherkinKeywords.Rule[0])) {
+		if (gherkinKeywords.Rule.some((keyword) => line.startsWith(keyword))) {
 			inRule = true;
 			inScenario = false;
 
@@ -44,7 +44,7 @@ export function formatGherkinLines(lines: string[]): string[] {
 		}
 
 		// Examples header starts a table block
-		if (line.startsWith(gherkinKeywords.Examples[0])) {
+		if (gherkinKeywords.Examples.some((keyword) => line.startsWith(keyword))) {
 			inExamplesTable = true;
 			formattedLines.push(
 				formatGherkinString(line, { inFeature, inRule, inScenario }),
@@ -53,10 +53,7 @@ export function formatGherkinLines(lines: string[]): string[] {
 		}
 
 		// Any scenario/example line marks that we're inside a scenario
-		if (
-			line.startsWith(gherkinKeywords.Scenario[0]) ||
-			line.startsWith(gherkinKeywords.Scenario[1])
-		) {
+		if (gherkinKeywords.Scenario.some((keyword) => line.startsWith(keyword))) {
 			inScenario = true;
 			formattedLines.push(
 				formatGherkinString(line, { inFeature, inRule, inScenario }),
@@ -135,24 +132,21 @@ export function formatGherkinString(
 
 	const trimmedLine = line.trimStart();
 
-	const startsWith = (keyword: string) => trimmedLine.startsWith(keyword);
-
-	// Headers
-	if (startsWith("Feature:")) {
+	// Feature
+	if (gherkinKeywords.Feature.some((keyword) => trimmedLine.startsWith(keyword))) {
 		return trimmedLine;
 	}
 
 	// Rule is always one level under Feature
-	if (startsWith("Rule:")) {
+	if (gherkinKeywords.Rule.some((keyword) => trimmedLine.startsWith(keyword))) {
 		return `\t${trimmedLine}`;
 	}
 
 	// Scenario / Example / tags headers
 	if (
-		startsWith("Scenario:") ||
-		startsWith("Scenario Outline:") ||
-		startsWith("Example:") ||
-		startsWith("@")
+		gherkinKeywords.Scenario.some((keyword) => trimmedLine.startsWith(keyword)) ||
+		gherkinKeywords.ScenarioOutline.some((keyword) => trimmedLine.startsWith(keyword)) ||
+		gherkinKeywords.Tag.some((keyword) => trimmedLine.startsWith(keyword))
 	) {
 		let indentLevel = 1;
 
@@ -166,17 +160,18 @@ export function formatGherkinString(
 	}
 
 	// Background / Examples headers keep previous behaviour
-	if (startsWith("Background:") || startsWith("Examples:")) {
+	if (gherkinKeywords.Background.some((keyword) => trimmedLine.startsWith(keyword)) ||
+	gherkinKeywords.Examples.some((keyword) => trimmedLine.startsWith(keyword))) {
 		return `\t\t${trimmedLine}`;
 	}
 
 	// Steps
 	if (
-		startsWith("Given") ||
-		startsWith("When") ||
-		startsWith("Then") ||
-		startsWith("And") ||
-		startsWith("But")
+		gherkinKeywords.Given.some((keyword) => trimmedLine.startsWith(keyword)) ||
+		gherkinKeywords.When.some((keyword) => trimmedLine.startsWith(keyword)) ||
+		gherkinKeywords.Then.some((keyword) => trimmedLine.startsWith(keyword)) ||
+		gherkinKeywords.And.some((keyword) => trimmedLine.startsWith(keyword)) ||
+		gherkinKeywords.But.some((keyword) => trimmedLine.startsWith(keyword))
 	) {
 		if (!context.inScenario) {
 			return trimmedLine;
