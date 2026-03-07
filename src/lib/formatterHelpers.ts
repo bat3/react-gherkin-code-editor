@@ -9,7 +9,8 @@ export function formatGherkinLines(lines: string[]): string[] {
 	let inRule = false;
 	let inScenario = false;
 	let inDocString = false;
-	let tableLines: string[] = [];
+	let examplesTableLines: string[] = [];
+	let stepTableLines: string[] = [];
 	const formattedLines: string[] = [];
 
 	for (let i = 0; i < lines.length; i++) {
@@ -87,7 +88,7 @@ export function formatGherkinLines(lines: string[]): string[] {
 
 		// Handle table rows inside an Examples block
 		if (inExamplesTable && line.includes("|")) {
-			tableLines.push(
+			examplesTableLines.push(
 				formatGherkinString(line, {
 					inFeature,
 					inRule,
@@ -99,12 +100,24 @@ export function formatGherkinLines(lines: string[]): string[] {
 			const isLastLine = i === lines.length - 1;
 			const nextLineHasPipe = !isLastLine && lines[i + 1].includes("|");
 
-			// Last row of the table: format and flush
+			// Last row of the examples table: format and flush
 			if (isLastLine || !nextLineHasPipe) {
-				const formattedTable = formatTable(tableLines);
+				const formattedTable = formatExamplesTable(examplesTableLines);
 				formattedLines.push(...formattedTable);
-				tableLines = [];
+				examplesTableLines = [];
 				inExamplesTable = false;
+			}
+		} else if (!inExamplesTable && inScenario && line.includes("|")) {
+			// Handle data tables attached to steps
+			stepTableLines.push(line);
+
+			const isLastLine = i === lines.length - 1;
+			const nextLineHasPipe = !isLastLine && lines[i + 1].includes("|");
+
+			if (isLastLine || !nextLineHasPipe) {
+				const formattedStepTable = formatStepTable(stepTableLines);
+				formattedLines.push(...formattedStepTable);
+				stepTableLines = [];
 			}
 		} else {
 			// Normal non-table line (including doc strings)
@@ -128,11 +141,11 @@ export function formatGherkinLines(lines: string[]): string[] {
 }
 
 /**
- * Formats a table by aligning columns
- * @param tableLines - Array of pipe-separated strings
- * @returns Array of formatted table lines
+ * Formats an Examples table by aligning columns
+ * @param tableLines - Array of already-indented, pipe-separated strings
+ * @returns Array of formatted Examples table lines
  */
-function formatTable(tableLines: string[]): string[] {
+function formatExamplesTable(tableLines: string[]): string[] {
 	if (tableLines.length === 0) return [];
 
 	// Split each line into cells and trim them
@@ -144,16 +157,44 @@ function formatTable(tableLines: string[]): string[] {
 	);
 
 	// Find the maximum width for each column
-	const columnWidths = rows[0].map((_, colIndex) => {
-		return Math.max(...rows.map((row) => row[colIndex]?.length || 0));
-	});
+	const columnWidths = rows[0].map((_, colIndex) =>
+		Math.max(...rows.map((row) => row[colIndex]?.length || 0)),
+	);
 
-	// Format each row
+	// Format each row with 3 tabs (Examples table)
 	return rows.map((row) => {
-		const formattedCells = row.map((cell, index) => {
-			return cell.padEnd(columnWidths[index]);
-		});
+		const formattedCells = row.map((cell, index) =>
+			cell.padEnd(columnWidths[index]),
+		);
 		return `\t\t\t| ${formattedCells.join(" | ")} |`;
+	});
+}
+
+/**
+ * Formats a data table attached to a step by aligning columns
+ * @param tableLines - Array of raw pipe-separated strings (no indentation)
+ * @returns Array of formatted step table lines
+ */
+function formatStepTable(tableLines: string[]): string[] {
+	if (tableLines.length === 0) return [];
+
+	const rows = tableLines.map((line) =>
+		line
+			.split("|")
+			.map((cell) => cell.trim())
+			.filter((cell) => cell.length > 0),
+	);
+
+	const columnWidths = rows[0].map((_, colIndex) =>
+		Math.max(...rows.map((row) => row[colIndex]?.length || 0)),
+	);
+
+	// Step tables are one level deeper (4 tabs)
+	return rows.map((row) => {
+		const formattedCells = row.map((cell, index) =>
+			cell.padEnd(columnWidths[index]),
+		);
+		return `\t\t\t\t| ${formattedCells.join(" | ")} |`;
 	});
 }
 

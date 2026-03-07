@@ -28,9 +28,9 @@ describe("formatGherkinLines", () => {
 			"Scenario Outline: Login test",
 			"    Given I am on login page",
 			"Examples:",
-			"|username|password|status|",
-			"|john|pass123|success|",
-			"|mary|pass456|failure|",
+			"|username|password |status|",
+			" |john|pass123|success|",
+			"|mary|pass456|failure |",
 			"Scenario: Another test",
 		];
 
@@ -47,15 +47,7 @@ describe("formatGherkinLines", () => {
 		expect(formatGherkinLines(input)).toEqual(expected);
 	});
 
-	test("should handle empty lines", () => {
-		const input = ["Feature: Test feature", "", "Scenario: Test scenario"];
-
-		const expected = ["Feature: Test feature", "", "\tScenario: Test scenario"];
-
-		expect(formatGherkinLines(input)).toEqual(expected);
-	});
-
-	test("should format simple scenario", () => {
+	test("should format simple steps", () => {
 		const input = [
 			"\tGiven I have entered 2 in the calculator",
 			"And I have entered 2 into the calculator",
@@ -354,6 +346,49 @@ describe("formatGherkinLines", () => {
 			"\t\t\t\tHere is the first paragraph of my blog post. Lorem ipsum dolor sit amet,",
 			"\t\t\t\tconsectetur adipiscing elit.",
 			"\t\t\t\t```"
+		];
+
+		expect(formatGherkinLines(input)).toEqual(expected);
+	});
+
+	test("should format Feature with Data Tables", () => {
+		// Test from https://cucumber.io/docs/gherkin/reference#doc-strings
+		const input = [
+			"Feature: Blog",
+			"Let users know when tasks are overdue, even when using other",
+			"features of the app",
+			"",
+			"Rule: A rule",
+			"Background:",
+			"Given blog page has been displayed",
+			"",
+			"Example: Display blog post",
+			"Given the following users exist:",
+			"|name|email|twitter|",
+			"|Aslak|aslak@cucumber.io| @aslak_hellesoy |",
+			"| Julien | julien@cucumber.io | @jbpros|",
+			"| Matt   | matt@cucumber.io   | @mattwynne|",
+			"When slecting one",
+			"Then it is highlited"
+		];
+
+		const expected = [
+			"Feature: Blog",
+			"\tLet users know when tasks are overdue, even when using other",
+			"\tfeatures of the app",
+			"",
+			"\tRule: A rule",
+			"\t\tBackground:",
+			"\t\t\tGiven blog page has been displayed",
+			"",
+			"\t\tExample: Display blog post",
+			"\t\t\tGiven the following users exist:",
+			"\t\t\t\t| name   | email              | twitter         |",
+			"\t\t\t\t| Aslak  | aslak@cucumber.io  | @aslak_hellesoy |",
+			"\t\t\t\t| Julien | julien@cucumber.io | @jbpros         |",
+			"\t\t\t\t| Matt   | matt@cucumber.io   | @mattwynne      |",
+			"\t\t\tWhen slecting one",
+			"\t\t\tThen it is highlited"
 		];
 
 		expect(formatGherkinLines(input)).toEqual(expected);
