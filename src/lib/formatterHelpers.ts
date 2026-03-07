@@ -21,12 +21,14 @@ export function formatGherkinLines(lines: string[]): string[] {
 			continue;
 		}
 
-		// New feature: reset context and keep the line as-is
+		// New feature: reset context
 		if (line.startsWith(gherkinKeywords.Feature[0])) {
 			inFeature = true;
 			inRule = false;
 			inScenario = false;
-			formattedLines.push(formatGherkinString(line, inScenario));
+			formattedLines.push(
+				formatGherkinString(line, { inFeature, inRule, inScenario }),
+			);
 			continue;
 		}
 
@@ -35,41 +37,38 @@ export function formatGherkinLines(lines: string[]): string[] {
 			inRule = true;
 			inScenario = false;
 
-			const formattedRule = formatGherkinString(line, inScenario);
-			if (formattedRule === line) {
-				formattedLines.push(`\t${line}`);
-			} else {
-				formattedLines.push(formattedRule);
-			}
-
+			formattedLines.push(
+				formatGherkinString(line, { inFeature, inRule, inScenario }),
+			);
 			continue;
 		}
 
 		// Examples header starts a table block
 		if (line.startsWith(gherkinKeywords.Examples[0])) {
 			inExamplesTable = true;
-			formattedLines.push(formatGherkinString(line, inScenario));
+			formattedLines.push(
+				formatGherkinString(line, { inFeature, inRule, inScenario }),
+			);
 			continue;
 		}
 
-		// Any scenario line marks that we're inside a scenario
-		if (line.startsWith(gherkinKeywords.Scenario[0]) || line.startsWith(gherkinKeywords.Scenario[1])) {
+		// Any scenario/example line marks that we're inside a scenario
+		if (
+			line.startsWith(gherkinKeywords.Scenario[0]) ||
+			line.startsWith(gherkinKeywords.Scenario[1])
+		) {
 			inScenario = true;
-			if (inRule) {
-				// Example inside a Rule: two levels under the Feature
-				formattedLines.push(`\t\t${line}`);
-			} else if (inFeature) {
-				// Example directly under a Feature
-				formattedLines.push(`\t${line}`);
-			} else {
-				formattedLines.push(formatGherkinString(line, inScenario));
-			}
+			formattedLines.push(
+				formatGherkinString(line, { inFeature, inRule, inScenario }),
+			);
 			continue;
 		}
 
 		// Handle table rows inside an Examples block
 		if (inExamplesTable && line.includes("|")) {
-			tableLines.push(formatGherkinString(line, inScenario));
+			tableLines.push(
+				formatGherkinString(line, { inFeature, inRule, inScenario }),
+			);
 
 			const isLastLine = i === lines.length - 1;
 			const nextLineHasPipe = !isLastLine && lines[i + 1].includes("|");
@@ -83,23 +82,9 @@ export function formatGherkinLines(lines: string[]): string[] {
 			}
 		} else {
 			// Normal non-table line
-			if (inFeature && !inScenario && !inExamplesTable) {
-				// Lines directly under a Feature are considered description.
-				// If the formatter doesn't apply any special indentation,
-				// indent them once to match expected output.
-				const formatted = formatGherkinString(line, inScenario);
-				if (formatted === line) {
-					formattedLines.push(`\t${line}`);
-				} else {
-					formattedLines.push(formatted);
-				}
-			} else if (inRule && inScenario && !inExamplesTable) {
-				// Steps inside a Rule's example: indent one level deeper
-				const formatted = formatGherkinString(line, inScenario);
-				formattedLines.push(`\t${formatted}`);
-			} else {
-				formattedLines.push(formatGherkinString(line, inScenario));
-			}
+			formattedLines.push(
+				formatGherkinString(line, { inFeature, inRule, inScenario }),
+			);
 		}
 	}
 
@@ -136,46 +121,74 @@ function formatTable(tableLines: string[]): string[] {
 	});
 }
 
+interface GherkinContext {
+	inFeature?: boolean;
+	inRule?: boolean;
+	inScenario?: boolean;
+}
+
+
 export function formatGherkinString(
 	line: string,
-	isInScenario = false,
-): string {
-	const keywordsLevel1 = ["Feature:"];
-	const keywordsLevel2 = ["Scenario:", "Scenario Outline:", "@"];
-	const keywordsLevel3 = ["Background:", "Examples:", "@"];
-	const keywordsLevel4 = ["Given", "When", "Then", "And", "But"];
+	context: GherkinContext,
+):  string {
 
-	const startsWithKeywordsLevel1 = keywordsLevel1.some((keyword) =>
-		line.includes(keyword),
-	);
+	const trimmedLine = line.trimStart();
 
-	if (startsWithKeywordsLevel1) {
-		return line.trim();
+	const startsWith = (keyword: string) => trimmedLine.startsWith(keyword);
+
+	// Headers
+	if (startsWith("Feature:")) {
+		return trimmedLine;
 	}
 
-	const startsWithKeywordsLevel2 = keywordsLevel2.some((keyword) =>
-		line.includes(keyword),
-	);
-
-	if (startsWithKeywordsLevel2) {
-		return `\t${line.trim()}`;
+	// Rule is always one level under Feature
+	if (startsWith("Rule:")) {
+		return `\t${trimmedLine}`;
 	}
 
-	const startsWithKeywordsLevel3 = keywordsLevel3.some((keyword) =>
-		line.includes(keyword),
-	);
+	// Scenario / Example / tags headers
+	if (
+		startsWith("Scenario:") ||
+		startsWith("Scenario Outline:") ||
+		startsWith("Example:") ||
+		startsWith("@")
+	) {
+		let indentLevel = 1;
 
-	if (startsWithKeywordsLevel3) {
-		return `\t\t${line.trim()}`;
+		if (context.inRule) {
+			indentLevel = 2;
+		} else if (context.inFeature) {
+			indentLevel = 1;
+		}
+
+		return `${"\t".repeat(indentLevel)}${trimmedLine}`;
 	}
 
-	const startsWithKeywordsLevel4 = keywordsLevel4.some((keyword) =>
-		line.includes(keyword),
-	);
+	// Background / Examples headers keep previous behaviour
+	if (startsWith("Background:") || startsWith("Examples:")) {
+		return `\t\t${trimmedLine}`;
+	}
 
-	if (startsWithKeywordsLevel4) {
-		// If we're in a scenario context, use level 3 indentation, otherwise no indentation
-		return isInScenario ? `\t\t${line.trim()}` : line.trim();
+	// Steps
+	if (
+		startsWith("Given") ||
+		startsWith("When") ||
+		startsWith("Then") ||
+		startsWith("And") ||
+		startsWith("But")
+	) {
+		if (!context.inScenario) {
+			return trimmedLine;
+		}
+
+		const indentLevel = context.inRule ? 3 : 2;
+		return `${"\t".repeat(indentLevel)}${trimmedLine}`;
+	}
+
+	// Description lines directly under a Feature
+	if (context.inFeature && !context.inScenario) {
+		return `\t${trimmedLine}`;
 	}
 
 	return line;

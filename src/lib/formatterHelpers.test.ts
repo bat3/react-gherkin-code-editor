@@ -154,7 +154,7 @@ describe("formatGherkinString", () => {
 
 		const expected = "Feature: Test feature";
 
-		expect(formatGherkinString(input)).toEqual(expected);
+		expect(formatGherkinString(input, {inFeature: false, inRule: false, inScenario:false})).toEqual(expected);
 	});
 
 	test("should handle mixed content", () => {
@@ -162,7 +162,7 @@ describe("formatGherkinString", () => {
 
 		const expected = "\tScenario Outline: Login test";
 
-		expect(formatGherkinString(input)).toEqual(expected);
+		expect(formatGherkinString(input, {inFeature: false, inRule: false, inScenario:false})).toEqual(expected);
 	});
 
 	test("should handle empty lines", () => {
@@ -170,7 +170,7 @@ describe("formatGherkinString", () => {
 
 		const expected = "";
 
-		expect(formatGherkinString(input)).toEqual(expected);
+		expect(formatGherkinString(input, {inFeature: false, inRule: false, inScenario:false})).toEqual(expected);
 	});
 });
 
