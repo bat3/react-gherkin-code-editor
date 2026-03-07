@@ -240,6 +240,124 @@ describe("formatGherkinLines", () => {
 
 		expect(formatGherkinLines(input)).toEqual(expected);
 	});
+
+	test("should format Feature with three double-quote DocString marks", () => {
+		// Test from https://cucumber.io/docs/gherkin/reference#doc-strings
+		const input = [
+			"Feature: Blog",
+			"Let users know when tasks are overdue, even when using other",
+			"features of the app",
+			"",
+			"Rule: A rule",
+			"Background:",
+			"Given blog page has been displayed",
+			"",
+			"Example: Display blog post",
+			"Given a blog post named \"Random\" with Markdown body",
+			'"""',
+			"Some Title, Eh?",
+			"===============",
+			"Here is the first paragraph of my blog post. Lorem ipsum dolor sit amet,",
+			"consectetur adipiscing elit.",
+			'"""',
+			"When blog post is published",
+			"Then site display ",
+			'"""',
+			"Some Title, Eh?",
+			"===============",
+			"Here is the first paragraph of my blog post. Lorem ipsum dolor sit amet,",
+			"consectetur adipiscing elit.",
+			'"""'
+		];
+
+		const expected = [
+			"Feature: Blog",
+			"\tLet users know when tasks are overdue, even when using other",
+			"\tfeatures of the app",
+			"",
+			"\tRule: A rule",
+			"\t\tBackground:",
+			"\t\t\tGiven blog page has been displayed",
+			"",
+			"\t\tExample: Display blog post",
+			"\t\t\tGiven a blog post named \"Random\" with Markdown body",
+			'\t\t\t\t"""',
+			"\t\t\t\tSome Title, Eh?",
+			"\t\t\t\t===============",
+			"\t\t\t\tHere is the first paragraph of my blog post. Lorem ipsum dolor sit amet,",
+			"\t\t\t\tconsectetur adipiscing elit.",
+			'\t\t\t\t"""',
+			"\t\t\tWhen blog post is published",
+			"\t\t\tThen site display",
+			'\t\t\t\t"""',
+			"\t\t\t\tSome Title, Eh?",
+			"\t\t\t\t===============",
+			"\t\t\t\tHere is the first paragraph of my blog post. Lorem ipsum dolor sit amet,",
+			"\t\t\t\tconsectetur adipiscing elit.",
+			'\t\t\t\t"""'
+		];
+
+		expect(formatGherkinLines(input)).toEqual(expected);
+	});
+
+	test("should format Feature with three backticks DocString marks", () => {
+		// Test from https://cucumber.io/docs/gherkin/reference#doc-strings
+		const input = [
+			"Feature: Blog",
+			"Let users know when tasks are overdue, even when using other",
+			"features of the app",
+			"",
+			"Rule: A rule",
+			"Background:",
+			"Given blog page has been displayed",
+			"",
+			"Example: Display blog post",
+			"Given a blog post named \"Random\" with Markdown body",
+			"```",
+			"Some Title, Eh?",
+			"===============",
+			"Here is the first paragraph of my blog post. Lorem ipsum dolor sit amet,",
+			"consectetur adipiscing elit.",
+			"```",
+			"When blog post is published",
+			"Then site display ",
+			"```",
+			"Some Title, Eh?",
+			"===============",
+			"Here is the first paragraph of my blog post. Lorem ipsum dolor sit amet,",
+			"consectetur adipiscing elit.",
+			"```"
+		];
+
+		const expected = [
+			"Feature: Blog",
+			"\tLet users know when tasks are overdue, even when using other",
+			"\tfeatures of the app",
+			"",
+			"\tRule: A rule",
+			"\t\tBackground:",
+			"\t\t\tGiven blog page has been displayed",
+			"",
+			"\t\tExample: Display blog post",
+			"\t\t\tGiven a blog post named \"Random\" with Markdown body",
+			"\t\t\t\t```",
+			"\t\t\t\tSome Title, Eh?",
+			"\t\t\t\t===============",
+			"\t\t\t\tHere is the first paragraph of my blog post. Lorem ipsum dolor sit amet,",
+			"\t\t\t\tconsectetur adipiscing elit.",
+			"\t\t\t\t```",
+			"\t\t\tWhen blog post is published",
+			"\t\t\tThen site display",
+			"\t\t\t\t```",
+			"\t\t\t\tSome Title, Eh?",
+			"\t\t\t\t===============",
+			"\t\t\t\tHere is the first paragraph of my blog post. Lorem ipsum dolor sit amet,",
+			"\t\t\t\tconsectetur adipiscing elit.",
+			"\t\t\t\t```"
+		];
+
+		expect(formatGherkinLines(input)).toEqual(expected);
+	});
 });
 
 describe("formatGherkinString", () => {
@@ -248,7 +366,7 @@ describe("formatGherkinString", () => {
 
 		const expected = "Feature: Test feature";
 
-		expect(formatGherkinString(input, {inFeature: false, inRule: false, inScenario:false})).toEqual(expected);
+		expect(formatGherkinString(input, {inFeature: false, inRule: false, inScenario:false, inDocString: false})).toEqual(expected);
 	});
 
 	test("should handle mixed content", () => {
@@ -256,7 +374,7 @@ describe("formatGherkinString", () => {
 
 		const expected = "\tScenario Outline: Login test";
 
-		expect(formatGherkinString(input, {inFeature: false, inRule: false, inScenario:false})).toEqual(expected);
+		expect(formatGherkinString(input, {inFeature: false, inRule: false, inScenario:false, inDocString: false})).toEqual(expected);
 	});
 
 	test("should handle empty lines", () => {
@@ -264,7 +382,7 @@ describe("formatGherkinString", () => {
 
 		const expected = "";
 
-		expect(formatGherkinString(input, {inFeature: false, inRule: false, inScenario:false})).toEqual(expected);
+		expect(formatGherkinString(input, {inFeature: false, inRule: false, inScenario:false, inDocString: false})).toEqual(expected);
 	});
 });
 

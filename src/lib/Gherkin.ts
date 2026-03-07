@@ -11,5 +11,6 @@ export const gherkinKeywords = {
     Then: ["Then", "*"],
     And: ["And", "*"],
     But: ["But", "*"],
-    Tag: ['@']
+    Tag: ['@'],
+    DocString: ['"""', "```"]
 }
