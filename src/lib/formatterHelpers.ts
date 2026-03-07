@@ -53,7 +53,9 @@ export function formatGherkinLines(lines: string[]): string[] {
 		}
 
 		// Any scenario/example line marks that we're inside a scenario
-		if (gherkinKeywords.Scenario.some((keyword) => line.startsWith(keyword))) {
+		if (gherkinKeywords.Scenario.some((keyword) => line.startsWith(keyword)) ||
+			gherkinKeywords.Background.some((keyword) => line.startsWith(keyword))
+		) {
 			inScenario = true;
 			formattedLines.push(
 				formatGherkinString(line, { inFeature, inRule, inScenario }),
@@ -146,6 +148,7 @@ export function formatGherkinString(
 	if (
 		gherkinKeywords.Scenario.some((keyword) => trimmedLine.startsWith(keyword)) ||
 		gherkinKeywords.ScenarioOutline.some((keyword) => trimmedLine.startsWith(keyword)) ||
+		gherkinKeywords.Background.some((keyword) => trimmedLine.startsWith(keyword)) ||
 		gherkinKeywords.Tag.some((keyword) => trimmedLine.startsWith(keyword))
 	) {
 		let indentLevel = 1;
@@ -160,8 +163,9 @@ export function formatGherkinString(
 	}
 
 	// Background / Examples headers keep previous behaviour
-	if (gherkinKeywords.Background.some((keyword) => trimmedLine.startsWith(keyword)) ||
-	gherkinKeywords.Examples.some((keyword) => trimmedLine.startsWith(keyword))) {
+	if (
+		gherkinKeywords.Examples.some((keyword) => trimmedLine.startsWith(keyword))
+	) {
 		return `\t\t${trimmedLine}`;
 	}
 
