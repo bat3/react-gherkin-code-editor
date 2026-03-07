@@ -6,6 +6,7 @@ import { gherkinKeywords } from "./Gherkin";
 export function formatGherkinLines(lines: string[]): string[] {
 	let inExamplesTable = false;
 	let inFeature = false;
+	let inRule = false;
 	let inScenario = false;
 	let tableLines: string[] = [];
 	const formattedLines: string[] = [];
@@ -23,8 +24,24 @@ export function formatGherkinLines(lines: string[]): string[] {
 		// New feature: reset context and keep the line as-is
 		if (line.startsWith(gherkinKeywords.Feature[0])) {
 			inFeature = true;
+			inRule = false;
 			inScenario = false;
 			formattedLines.push(formatGherkinString(line, inScenario));
+			continue;
+		}
+
+		// Rule lines under a feature
+		if (line.startsWith(gherkinKeywords.Rule[0])) {
+			inRule = true;
+			inScenario = false;
+
+			const formattedRule = formatGherkinString(line, inScenario);
+			if (formattedRule === line) {
+				formattedLines.push(`\t${line}`);
+			} else {
+				formattedLines.push(formattedRule);
+			}
+
 			continue;
 		}
 
@@ -36,9 +53,17 @@ export function formatGherkinLines(lines: string[]): string[] {
 		}
 
 		// Any scenario line marks that we're inside a scenario
-		if (line.startsWith(gherkinKeywords.Scenario[0])) {
+		if (line.startsWith(gherkinKeywords.Scenario[0]) || line.startsWith(gherkinKeywords.Scenario[1])) {
 			inScenario = true;
-			formattedLines.push(formatGherkinString(line, inScenario));
+			if (inRule) {
+				// Example inside a Rule: two levels under the Feature
+				formattedLines.push(`\t\t${line}`);
+			} else if (inFeature) {
+				// Example directly under a Feature
+				formattedLines.push(`\t${line}`);
+			} else {
+				formattedLines.push(formatGherkinString(line, inScenario));
+			}
 			continue;
 		}
 
@@ -68,6 +93,10 @@ export function formatGherkinLines(lines: string[]): string[] {
 				} else {
 					formattedLines.push(formatted);
 				}
+			} else if (inRule && inScenario && !inExamplesTable) {
+				// Steps inside a Rule's example: indent one level deeper
+				const formatted = formatGherkinString(line, inScenario);
+				formattedLines.push(`\t${formatted}`);
 			} else {
 				formattedLines.push(formatGherkinString(line, inScenario));
 			}
