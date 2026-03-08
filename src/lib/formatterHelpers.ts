@@ -141,14 +141,15 @@ export function formatGherkinLines(lines: string[]): string[] {
 }
 
 /**
- * Formats an Examples table by aligning columns
- * @param tableLines - Array of already-indented, pipe-separated strings
- * @returns Array of formatted Examples table lines
+ * Generic helper to format a Gherkin table (Examples or data table)
+ * by aligning columns and applying a given indentation level.
  */
-function formatExamplesTable(tableLines: string[]): string[] {
+function formatTableLines(
+	tableLines: string[],
+	indentTabs: number,
+): string[] {
 	if (tableLines.length === 0) return [];
 
-	// Split each line into cells and trim them
 	const rows = tableLines.map((line) =>
 		line
 			.split("|")
@@ -156,46 +157,32 @@ function formatExamplesTable(tableLines: string[]): string[] {
 			.filter((cell) => cell.length > 0),
 	);
 
-	// Find the maximum width for each column
 	const columnWidths = rows[0].map((_, colIndex) =>
 		Math.max(...rows.map((row) => row[colIndex]?.length || 0)),
 	);
 
-	// Format each row with 3 tabs (Examples table)
 	return rows.map((row) => {
 		const formattedCells = row.map((cell, index) =>
 			cell.padEnd(columnWidths[index]),
 		);
-		return `\t\t\t| ${formattedCells.join(" | ")} |`;
+		return `${"\t".repeat(indentTabs)}| ${formattedCells.join(" | ")} |`;
 	});
 }
 
 /**
+ * Formats an Examples table by aligning columns
+ * (always 3 tabs of indentation).
+ */
+function formatExamplesTable(tableLines: string[]): string[] {
+	return formatTableLines(tableLines, 3);
+}
+
+/**
  * Formats a data table attached to a step by aligning columns
- * @param tableLines - Array of raw pipe-separated strings (no indentation)
- * @returns Array of formatted step table lines
+ * (always 4 tabs of indentation).
  */
 function formatStepTable(tableLines: string[]): string[] {
-	if (tableLines.length === 0) return [];
-
-	const rows = tableLines.map((line) =>
-		line
-			.split("|")
-			.map((cell) => cell.trim())
-			.filter((cell) => cell.length > 0),
-	);
-
-	const columnWidths = rows[0].map((_, colIndex) =>
-		Math.max(...rows.map((row) => row[colIndex]?.length || 0)),
-	);
-
-	// Step tables are one level deeper (4 tabs)
-	return rows.map((row) => {
-		const formattedCells = row.map((cell, index) =>
-			cell.padEnd(columnWidths[index]),
-		);
-		return `\t\t\t\t| ${formattedCells.join(" | ")} |`;
-	});
+	return formatTableLines(tableLines, 4);
 }
 
 interface GherkinContext {
