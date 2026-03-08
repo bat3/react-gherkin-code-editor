@@ -103,6 +103,7 @@ export class Editor {
 					[/Then( |$)/, "Then-keyword"],
 					[/And( |$)/, "And-keyword"],
 					[/<.*?>/, "DelimitedParameters-keyword"],
+					[/".*?"/, "StringParameters-keyword"],
 					[/Examples:/, "Examples-keyword"],
 				],
 			},
@@ -137,6 +138,11 @@ export class Editor {
 				{ token: "And-keyword", foreground: "7dd956", fontStyle: "bold" },
 				{
 					token: "DelimitedParameters-keyword",
+					foreground: "7dd956",
+					fontStyle: "bold",
+				},
+				{
+					token: "StringParameters-keyword",
 					foreground: "7dd956",
 					fontStyle: "bold",
 				},
@@ -177,6 +183,11 @@ export class Editor {
 				{ token: "And-keyword", foreground: "7dd956", fontStyle: "bold" },
 				{
 					token: "DelimitedParameters-keyword",
+					foreground: "7dd956",
+					fontStyle: "bold",
+				},
+				{
+					token: "StringParameters-keyword",
 					foreground: "7dd956",
 					fontStyle: "bold",
 				},
