@@ -5,23 +5,6 @@ import {
 } from "./formatterHelpers";
 
 describe("formatGherkinLines", () => {
-	test("should format Examples table correctly", () => {
-		const input = [
-			"Examples:",
-			"|username|password|",
-			"|john|pass123|",
-			"|mary|pass456|",
-		];
-
-		const expected = [
-			"\t\tExamples:",
-			"\t\t\t| username | password |",
-			"\t\t\t| john     | pass123  |",
-			"\t\t\t| mary     | pass456  |",
-		];
-
-		expect(formatGherkinLines(input)).toEqual(expected);
-	});
 
 	test("should handle mixed content with tables", () => {
 		const input = [
@@ -60,6 +43,32 @@ describe("formatGherkinLines", () => {
 			"And I have entered 2 into the calculator",
 			"When I press add",
 			"Then the result should be 4 on the screen",
+		];
+
+		expect(formatGherkinLines(input)).toEqual(expected);
+	});
+
+	test("should format simple steps with examples", () => {
+		const input = [
+			"Given there are <start> cucumbers",
+			"When I eat <eat> cucumbers",
+			"Then I should have <left> cucumbers",
+			"",
+			"Examples:",
+			"|start|eat|left|",
+			"| 12 |   5 |                7 |",
+			"|    20 |   5 |   15 |    "
+		];
+
+		const expected = [
+			"Given there are <start> cucumbers",
+			"When I eat <eat> cucumbers",
+			"Then I should have <left> cucumbers",
+			"",
+			"Examples:",
+			"\t| start | eat | left |",
+			"\t| 12    | 5   | 7    |",
+			"\t| 20    | 5   | 15   |"
 		];
 
 		expect(formatGherkinLines(input)).toEqual(expected);

@@ -102,7 +102,12 @@ export function formatGherkinLines(lines: string[]): string[] {
 
 			// Last row of the examples table: format and flush
 			if (isLastLine || !nextLineHasPipe) {
-				const formattedTable = formatExamplesTable(examplesTableLines);
+				const formattedTable = formatExamplesTable(examplesTableLines, {
+					inFeature,
+					inRule,
+					inScenario,
+					inDocString,
+				});
 				formattedLines.push(...formattedTable);
 				examplesTableLines = [];
 				inExamplesTable = false;
@@ -169,12 +174,22 @@ function formatTableLines(
 	});
 }
 
+const baseIndentForSteps = (context: GherkinContext) => {
+	if (context.inRule && context.inScenario) {
+		return 3;
+	}
+	if (context.inScenario) {
+		return 2;
+	}
+	return 0;
+};
+
 /**
  * Formats an Examples table by aligning columns
  * (always 3 tabs of indentation).
  */
-function formatExamplesTable(tableLines: string[]): string[] {
-	return formatTableLines(tableLines, 3);
+function formatExamplesTable(tableLines: string[], context: GherkinContext): string[] {
+	return formatTableLines(tableLines, baseIndentForSteps(context) + 1);
 }
 
 /**
@@ -192,7 +207,6 @@ interface GherkinContext {
 	inDocString: boolean;
 }
 
-
 export function formatGherkinString(
 	line: string,
 	context: GherkinContext,
@@ -200,26 +214,18 @@ export function formatGherkinString(
 
 	const trimmedLine = line.trimStart();
 
-	const baseIndentForSteps = () => {
-		if (context.inRule && context.inScenario) {
-			return 3;
-		}
-		if (context.inScenario) {
-			return 2;
-		}
-		return 0;
-	};
+	
 
 	// Doc string delimiters and body: opening, content, and closing at step+1
 	if (gherkinKeywords.DocString.some((keyword) => trimmedLine === keyword)) {
-		const baseIndent = baseIndentForSteps();
+		const baseIndent = baseIndentForSteps(context);
 		const indentLevel = baseIndent + 1;
 		return `${"\t".repeat(indentLevel)}${trimmedLine}`;
 	}
 
 	// Doc string body: always one level deeper than the step
 	if (context.inDocString) {
-		const baseIndent = baseIndentForSteps();
+		const baseIndent = baseIndentForSteps(context);
 		const indentLevel = baseIndent + 1;
 		return `${"\t".repeat(indentLevel)}${trimmedLine}`;
 	}
@@ -252,11 +258,13 @@ export function formatGherkinString(
 		return `${"\t".repeat(indentLevel)}${trimmedLine}`;
 	}
 
-	// Background / Examples headers keep previous behaviour
+	// Examples headers keep previous behaviour
 	if (
 		gherkinKeywords.Examples.some((keyword) => trimmedLine.startsWith(keyword))
 	) {
-		return `\t\t${trimmedLine}`;
+		const baseIndent = baseIndentForSteps(context);
+		const indentLevel = baseIndent;
+		return `${"\t".repeat(indentLevel)}${trimmedLine}`;
 	}
 
 	// Steps
