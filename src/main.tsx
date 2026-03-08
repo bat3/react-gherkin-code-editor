@@ -28,6 +28,7 @@ type MonacoEnvironmentType = {
 };
 
 const defaultGherkin = [
+	"# language: en",
 	"Feature: Calculator",
 	"",
 	"Simple calculator for adding two numbers",

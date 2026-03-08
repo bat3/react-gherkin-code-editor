@@ -94,17 +94,20 @@ export class Editor {
 		monaco.languages.setMonarchTokensProvider("GherkinLanguage-en", {
 			tokenizer: {
 				root: [
-					[/Feature:/, "Feature-keyword"],
-					[/\@.*/, "tag-keyword"],
-					[/Scenario:/, "Scenario-keyword"],
-					[/Scenario Outline:/, "ScenarioOutline-keyword"],
-					[/Given( |$)/, "Given-keyword"],
-					[/When( |$)/, "When-keyword"],
-					[/Then( |$)/, "Then-keyword"],
-					[/And( |$)/, "And-keyword"],
-					[/<.*?>/, "DelimitedParameters-keyword"],
-					[/".*?"/, "StringParameters-keyword"],
-					[/Examples:/, "Examples-keyword"],
+					[/Feature:/, "primary-keyword"],
+					[/\@.*/, "secondary-keyword"],
+					[/Background:/, "primary-keyword"],
+					[/Scenario:/, "primary-keyword"],
+					[/Scenario Outline:/, "primary-keyword"],
+					[/Given( |$)/, "primary-keyword"],
+					[/When( |$)/, "primary-keyword"],
+					[/Then( |$)/, "primary-keyword"],
+					[/And( |$)/, "primary-keyword"],
+					[/\*( |$)/, "primary-keyword"],
+					[/<.*?>/, "primary-keyword"],
+					[/".*?"/, "primary-keyword"],
+					[/Examples:/, "primary-keyword"],
+					[/\#.*/, "secondary-keyword"],
 				],
 			},
 		});
@@ -117,40 +120,11 @@ export class Editor {
 			inherit: false,
 			rules: [
 				{
-					token: "Feature-keyword",
+					token: "primary-keyword",
 					foreground: "7dd956",
 					fontStyle: "bold",
 				},
-				{ token: "tag-keyword", foreground: "7dd956", fontStyle: "italic" },
-				{
-					token: "Scenario-keyword",
-					foreground: "7dd956",
-					fontStyle: "bold",
-				},
-				{
-					token: "ScenarioOutline-keyword",
-					foreground: "7dd956",
-					fontStyle: "bold",
-				},
-				{ token: "Given-keyword", foreground: "7dd956", fontStyle: "bold" },
-				{ token: "When-keyword", foreground: "7dd956", fontStyle: "bold" },
-				{ token: "Then-keyword", foreground: "7dd956", fontStyle: "bold" },
-				{ token: "And-keyword", foreground: "7dd956", fontStyle: "bold" },
-				{
-					token: "DelimitedParameters-keyword",
-					foreground: "7dd956",
-					fontStyle: "bold",
-				},
-				{
-					token: "StringParameters-keyword",
-					foreground: "7dd956",
-					fontStyle: "bold",
-				},
-				{
-					token: "Examples-keyword",
-					foreground: "7dd956",
-					fontStyle: "bold",
-				},
+				{ token: "secondary-keyword", foreground: "7dd956", fontStyle: "italic" },
 			],
 			colors: {
 				"editor.foreground": "#000000",
@@ -162,40 +136,11 @@ export class Editor {
 			inherit: false,
 			rules: [
 				{
-					token: "Feature-keyword",
+					token: "primary-keyword",
 					foreground: "7dd956",
 					fontStyle: "bold",
 				},
-				{ token: "tag-keyword", foreground: "7dd956", fontStyle: "italic" },
-				{
-					token: "Scenario-keyword",
-					foreground: "7dd956",
-					fontStyle: "bold",
-				},
-				{
-					token: "ScenarioOutline-keyword",
-					foreground: "7dd956",
-					fontStyle: "bold",
-				},
-				{ token: "Given-keyword", foreground: "7dd956", fontStyle: "bold" },
-				{ token: "When-keyword", foreground: "7dd956", fontStyle: "bold" },
-				{ token: "Then-keyword", foreground: "7dd956", fontStyle: "bold" },
-				{ token: "And-keyword", foreground: "7dd956", fontStyle: "bold" },
-				{
-					token: "DelimitedParameters-keyword",
-					foreground: "7dd956",
-					fontStyle: "bold",
-				},
-				{
-					token: "StringParameters-keyword",
-					foreground: "7dd956",
-					fontStyle: "bold",
-				},
-				{
-					token: "Examples-keyword",
-					foreground: "7dd956",
-					fontStyle: "bold",
-				},
+				{ token: "secondary-keyword", foreground: "7dd956", fontStyle: "italic" },
 			],
 			colors: {
 				"editor.foreground": "#ffffff",
