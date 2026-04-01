@@ -95,7 +95,7 @@ export class Editor {
 			tokenizer: {
 				root: [
 					[/Feature:/, "primary-keyword"],
-					[/\@.*/, "secondary-keyword"],
+					[/^\t* *@.*/, "secondary-keyword"],
 					[/Background:/, "primary-keyword"],
 					[/Scenario:/, "primary-keyword"],
 					[/Scenario Outline:/, "primary-keyword"],
@@ -107,7 +107,7 @@ export class Editor {
 					[/<.*?>/, "primary-keyword"],
 					[/".*?"/, "primary-keyword"],
 					[/Examples:/, "primary-keyword"],
-					[/\#.*/, "secondary-keyword"],
+					[/^\t* *\#.*/, "secondary-keyword"],
 				],
 			},
 		});
