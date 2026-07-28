@@ -1,22 +1,18 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { formatGherkinLines } from "./formatterHelpers";
-import * as monaco2 from "monaco-editor";
 
 export class Editor {
 	editor: monaco.editor.IStandaloneCodeEditor;
 
 	constructor(elementRef: HTMLDivElement, code?: string) {
-		monaco2.languages.typescript;
 		this.registerLanguages();
 		this.defineThemes();
 		this.addAutoComplete();
 
 		function formatMySpecialLanguage(model: monaco.editor.ITextModel) {
-			// Get all lines from the editor
 			const linesContent = model.getLinesContent();
 			const formattedLines = formatGherkinLines(linesContent);
 
-			// Find the line with the maximum column count
 			let maxColumnLineNumber = 0;
 			let maxColumnCount = 0;
 
@@ -28,7 +24,6 @@ export class Editor {
 				}
 			}
 
-			// Return the formatting edit
 			return [
 				{
 					range: {
@@ -42,7 +37,6 @@ export class Editor {
 			];
 		}
 
-		// Register formatter of gherkin on specific char
 		monaco.languages.registerDocumentFormattingEditProvider(
 			"GherkinLanguage-en",
 			{
@@ -50,7 +44,6 @@ export class Editor {
 			},
 		);
 
-		// Register formatter of gherkin
 		monaco.languages.registerOnTypeFormattingEditProvider(
 			"GherkinLanguage-en",
 			{
@@ -65,7 +58,17 @@ export class Editor {
 			value: code,
 			language: "GherkinLanguage-en",
 			acceptSuggestionOnEnter: "off",
+			accessibilitySupport: "on",
 		});
+	}
+
+	/**
+	 * Nettoie les ressources de l'éditeur Monaco.
+	 */
+	public dispose(): void {
+		if (this.editor) {
+			this.editor.dispose();
+		}
 	}
 
 	public format() {
@@ -87,10 +90,8 @@ export class Editor {
 	}
 
 	private registerLanguages() {
-		// Register a new language
 		monaco.languages.register({ id: "GherkinLanguage-en" });
 
-		// Register a tokens provider for the language
 		monaco.languages.setMonarchTokensProvider("GherkinLanguage-en", {
 			tokenizer: {
 				root: [
@@ -114,7 +115,6 @@ export class Editor {
 	}
 
 	private defineThemes() {
-		// Define a new theme that contains only rules that match this language
 		monaco.editor.defineTheme("defaultLightTheme", {
 			base: "vs",
 			inherit: false,
@@ -225,7 +225,6 @@ export class Editor {
 					endColumn: word.endColumn,
 				};
 
-				// Get all words from the current document
 				const text = model.getValue();
 				const wordRegex = /\b\w+\b/g;
 				const words = new Set<string>();
@@ -236,10 +235,9 @@ export class Editor {
 					match = wordRegex.exec(text);
 				}
 
-				// Get all lines from the current document
 				const lines = model.getLinesContent();
 				const lineSuggestions = lines
-					.filter((line) => line.trim().length > 0) // Filter out empty lines
+					.filter((line) => line.trim().length > 0)
 					.map((line) => ({
 						label: line,
 						kind: monaco.languages.CompletionItemKind.Snippet,
@@ -248,7 +246,6 @@ export class Editor {
 						range: range,
 					}));
 
-				// Create word suggestions
 				const wordSuggestions = Array.from(words).map((word) => ({
 					label: word,
 					kind: monaco.languages.CompletionItemKind.Text,
@@ -256,7 +253,6 @@ export class Editor {
 					range: range,
 				}));
 
-				// Combine all suggestions
 				return {
 					suggestions: [
 						...createDependencyProposals(range),

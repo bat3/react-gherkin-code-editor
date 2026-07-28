@@ -18,19 +18,20 @@ export const Editor = forwardRef<EditorExposeMethods, EditorProps>(
 		const [editor, setEditor] = useState<EditorClass>();
 		const divEditorRef = useRef<HTMLDivElement>(null);
 
+		// Initialisation de l'éditeur et nettoyage
 		useEffect(() => {
-			if (divEditorRef) {
-				setEditor((editor) => {
-					if (editor) return editor;
-					if (divEditorRef.current)
-						return new EditorClass(divEditorRef.current, props.code);
-				});
-			}
-			// Todo
-			//return () => editor?.dispose();
-		}, [props.code]);
+			if (!divEditorRef.current) return;
 
-		// Handle resize events
+			const newEditor = new EditorClass(divEditorRef.current, props.code);
+			setEditor(newEditor);
+
+			// Nettoyage : dispose de l'éditeur Monaco
+			return () => {
+				newEditor.dispose();
+			};
+		}, []);
+
+		// Gestion du redimensionnement
 		useEffect(() => {
 			if (!editor || !divEditorRef.current) return;
 
