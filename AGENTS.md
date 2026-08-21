@@ -22,6 +22,7 @@
 - **Test Watch Mode**: `npm run test:watch`
 - **Lint / Check Code**: `npx biome check src`
 - **Format Code**: `npx biome format --write src`
+- **Versioning**: Increment the `version` field in `package.json` (patch, minor, or major as appropriate) when submitting changes that release new fixes or features.
 
 ## Coding Standards & Style Conventions
 
