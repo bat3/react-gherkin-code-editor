@@ -6,28 +6,20 @@
 
 ## Repository Structure
 
-- `src/`
-  - `components/`
-    - `Editor.tsx`: React component interface wrapping the Monaco Editor instance (`EditorExposeMethods`, props, auto-formatting on blur/mount).
-  - `lib/`
-    - `Editor.ts`: Monaco editor initialization, language registration, custom token completion provider, document formatting provider, and theme settings.
-    - `Gherkin.ts`: Gherkin keywords, syntax definitions, and Monarch tokenizer rules.
-    - `formatterHelpers.ts`: Core Gherkin string/line formatting logic (table alignment, indentation for Steps, Background, Examples, DocStrings, Tags).
-    - `formatterHelpers.test.ts`: Jest unit tests for Gherkin formatting helpers.
-  - `index.ts`: Entry point exporting the `Editor` component, props, and expose method types.
+- `src/`: Core source code containing editor components, Monaco setup, and formatting logic.
 - `index.html`: Vite development preview app entry point.
 
 ## Development & Workflows
 
 ### Package Manager
-- `pnpm` is the preferred package manager (v10+). Run `pnpm install` before running scripts if `node_modules` is absent.
+- `npm` is the package manager for this repository. Run `npm install` before running scripts.
 
 ### Key Commands
-- **Install Dependencies**: `pnpm install`
-- **Development Server**: `pnpm dev` (starts Vite dev server)
-- **Build**: `pnpm build` (compiles `src/index.ts` using `tsup` to CJS, ESM, and type declarations in `dist/`)
-- **Run Tests**: `pnpm test` (runs Jest test suite)
-- **Test Watch Mode**: `pnpm test:watch`
+- **Install Dependencies**: `npm install`
+- **Development Server**: `npm run dev` (starts Vite dev server)
+- **Build**: `npm run build` (compiles `src/index.ts` using `tsup` to CJS, ESM, and type declarations in `dist/`)
+- **Run Tests**: `npm test` (runs Jest test suite)
+- **Test Watch Mode**: `npm run test:watch`
 - **Lint / Check Code**: `npx biome check src`
 - **Format Code**: `npx biome format --write src`
 
