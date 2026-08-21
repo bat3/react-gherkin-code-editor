@@ -19,6 +19,7 @@
 - **Development Server**: `npm run dev` (starts Vite dev server)
 - **Build**: `npm run build` (compiles `src/index.ts` using `tsup` to CJS, ESM, and type declarations in `dist/`)
 - **Run Tests**: `npm test` (runs Jest test suite)
+- **Run E2E Tests**: `npm run test:e2e` (runs Playwright end-to-end test suite)
 - **Test Watch Mode**: `npm run test:watch`
 - **Lint / Check Code**: `npx biome check src`
 - **Format Code**: `npx biome format --write src`
