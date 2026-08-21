@@ -5,7 +5,6 @@ import {
 } from "./formatterHelpers";
 
 describe("formatGherkinLines", () => {
-
 	test("should handle mixed content with tables", () => {
 		const input = [
 			"Scenario Outline: Login test",
@@ -57,7 +56,7 @@ describe("formatGherkinLines", () => {
 			"Examples:",
 			"|start|eat|left|",
 			"| 12 |   5 |                7 |",
-			"|    20 |   5 |   15 |    "
+			"|    20 |   5 |   15 |    ",
 		];
 
 		const expected = [
@@ -68,7 +67,7 @@ describe("formatGherkinLines", () => {
 			"Examples:",
 			"\t| start | eat | left |",
 			"\t| 12    | 5   | 7    |",
-			"\t| 20    | 5   | 15   |"
+			"\t| 20    | 5   | 15   |",
 		];
 
 		expect(formatGherkinLines(input)).toEqual(expected);
@@ -105,7 +104,7 @@ describe("formatGherkinLines", () => {
 			"# -- FILE: features/gherkin.rule_example.feature",
 			"Feature: Highlander",
 			"",
-  			"Rule: There can be only One",
+			"Rule: There can be only One",
 			"",
 			"Example: Only One -- More than one alive",
 			"Given there are 3 ninjas",
@@ -118,16 +117,16 @@ describe("formatGherkinLines", () => {
 			"Given there is only 1 ninja alive",
 			"Then they will live forever ;-)",
 			"",
-  			"Rule: There can be Two (in some cases)",
+			"Rule: There can be Two (in some cases)",
 			"",
-    		"Example: Two -- Dead and Reborn as Phoenix",
+			"Example: Two -- Dead and Reborn as Phoenix",
 		];
 
 		const expected = [
 			"# -- FILE: features/gherkin.rule_example.feature",
 			"Feature: Highlander",
 			"",
-  			"\tRule: There can be only One",
+			"\tRule: There can be only One",
 			"",
 			"\t\tExample: Only One -- More than one alive",
 			"\t\t\tGiven there are 3 ninjas",
@@ -140,9 +139,9 @@ describe("formatGherkinLines", () => {
 			"\t\t\tGiven there is only 1 ninja alive",
 			"\t\t\tThen they will live forever ;-)",
 			"",
-  			"\tRule: There can be Two (in some cases)",
+			"\tRule: There can be Two (in some cases)",
 			"",
-    		"\t\tExample: Two -- Dead and Reborn as Phoenix",
+			"\t\tExample: Two -- Dead and Reborn as Phoenix",
 		];
 
 		expect(formatGherkinLines(input)).toEqual(expected);
@@ -156,20 +155,20 @@ describe("formatGherkinLines", () => {
 			" who can post to all blogs.",
 			"",
 			"Background:",
-			"Given a global administrator named \"Greg\"",
-			"And a blog named \"Greg's anti-tax rants\"",
-			"And a customer named \"Dr. Bill\"",
-			"And a blog named \"Expensive Therapy\" owned by \"Dr. Bill\"",
+			'Given a global administrator named "Greg"',
+			'And a blog named "Greg\'s anti-tax rants"',
+			'And a customer named "Dr. Bill"',
+			'And a blog named "Expensive Therapy" owned by "Dr. Bill"',
 			"",
 			"Scenario: Dr. Bill posts to his own blog",
 			"Given I am logged in as Dr. Bill",
-			"When I try to post to \"Expensive Therapy\"",
-			"Then I should see \"Your article was published.\"",
+			'When I try to post to "Expensive Therapy"',
+			'Then I should see "Your article was published."',
 			"",
 			"Scenario: Dr. Bill tries to post to somebody else's blog, and fails",
 			"Given I am logged in as Dr. Bill",
-			"When I try to post to \"Greg's anti-tax rants\"",
-			"Then I should see \"Hey! That's not your blog!\"",
+			'When I try to post to "Greg\'s anti-tax rants"',
+			'Then I should see "Hey! That\'s not your blog!"',
 		];
 
 		const expected = [
@@ -178,20 +177,20 @@ describe("formatGherkinLines", () => {
 			"\twho can post to all blogs.",
 			"",
 			"\tBackground:",
-			"\t\tGiven a global administrator named \"Greg\"",
-			"\t\tAnd a blog named \"Greg's anti-tax rants\"",
-			"\t\tAnd a customer named \"Dr. Bill\"",
-			"\t\tAnd a blog named \"Expensive Therapy\" owned by \"Dr. Bill\"",
+			'\t\tGiven a global administrator named "Greg"',
+			'\t\tAnd a blog named "Greg\'s anti-tax rants"',
+			'\t\tAnd a customer named "Dr. Bill"',
+			'\t\tAnd a blog named "Expensive Therapy" owned by "Dr. Bill"',
 			"",
 			"\tScenario: Dr. Bill posts to his own blog",
 			"\t\tGiven I am logged in as Dr. Bill",
-			"\t\tWhen I try to post to \"Expensive Therapy\"",
-			"\t\tThen I should see \"Your article was published.\"",
+			'\t\tWhen I try to post to "Expensive Therapy"',
+			'\t\tThen I should see "Your article was published."',
 			"",
 			"\tScenario: Dr. Bill tries to post to somebody else's blog, and fails",
 			"\t\tGiven I am logged in as Dr. Bill",
-			"\t\tWhen I try to post to \"Greg's anti-tax rants\"",
-			"\t\tThen I should see \"Hey! That's not your blog!\"",
+			'\t\tWhen I try to post to "Greg\'s anti-tax rants"',
+			'\t\tThen I should see "Hey! That\'s not your blog!"',
 		];
 
 		expect(formatGherkinLines(input)).toEqual(expected);
@@ -216,7 +215,7 @@ describe("formatGherkinLines", () => {
 			"Example: Already used today",
 			"Given I last used the app earlier today",
 			"When I use the app",
-			"Then I am not notified about overdue tasks"
+			"Then I am not notified about overdue tasks",
 		];
 
 		const expected = [
@@ -236,7 +235,7 @@ describe("formatGherkinLines", () => {
 			"\t\tExample: Already used today",
 			"\t\t\tGiven I last used the app earlier today",
 			"\t\t\tWhen I use the app",
-			"\t\t\tThen I am not notified about overdue tasks"
+			"\t\t\tThen I am not notified about overdue tasks",
 		];
 
 		expect(formatGherkinLines(input)).toEqual(expected);
@@ -254,7 +253,7 @@ describe("formatGherkinLines", () => {
 			"Given blog page has been displayed",
 			"",
 			"Example: Display blog post",
-			"Given a blog post named \"Random\" with Markdown body",
+			'Given a blog post named "Random" with Markdown body',
 			'"""',
 			"Some Title, Eh?",
 			"===============",
@@ -268,7 +267,7 @@ describe("formatGherkinLines", () => {
 			"===============",
 			"Here is the first paragraph of my blog post. Lorem ipsum dolor sit amet,",
 			"consectetur adipiscing elit.",
-			'"""'
+			'"""',
 		];
 
 		const expected = [
@@ -281,7 +280,7 @@ describe("formatGherkinLines", () => {
 			"\t\t\tGiven blog page has been displayed",
 			"",
 			"\t\tExample: Display blog post",
-			"\t\t\tGiven a blog post named \"Random\" with Markdown body",
+			'\t\t\tGiven a blog post named "Random" with Markdown body',
 			'\t\t\t\t"""',
 			"\t\t\t\tSome Title, Eh?",
 			"\t\t\t\t===============",
@@ -295,7 +294,7 @@ describe("formatGherkinLines", () => {
 			"\t\t\t\t===============",
 			"\t\t\t\tHere is the first paragraph of my blog post. Lorem ipsum dolor sit amet,",
 			"\t\t\t\tconsectetur adipiscing elit.",
-			'\t\t\t\t"""'
+			'\t\t\t\t"""',
 		];
 
 		expect(formatGherkinLines(input)).toEqual(expected);
@@ -313,7 +312,7 @@ describe("formatGherkinLines", () => {
 			"Given blog page has been displayed",
 			"",
 			"Example: Display blog post",
-			"Given a blog post named \"Random\" with Markdown body",
+			'Given a blog post named "Random" with Markdown body',
 			"```",
 			"Some Title, Eh?",
 			"===============",
@@ -327,7 +326,7 @@ describe("formatGherkinLines", () => {
 			"===============",
 			"Here is the first paragraph of my blog post. Lorem ipsum dolor sit amet,",
 			"consectetur adipiscing elit.",
-			"```"
+			"```",
 		];
 
 		const expected = [
@@ -340,7 +339,7 @@ describe("formatGherkinLines", () => {
 			"\t\t\tGiven blog page has been displayed",
 			"",
 			"\t\tExample: Display blog post",
-			"\t\t\tGiven a blog post named \"Random\" with Markdown body",
+			'\t\t\tGiven a blog post named "Random" with Markdown body',
 			"\t\t\t\t```",
 			"\t\t\t\tSome Title, Eh?",
 			"\t\t\t\t===============",
@@ -354,7 +353,7 @@ describe("formatGherkinLines", () => {
 			"\t\t\t\t===============",
 			"\t\t\t\tHere is the first paragraph of my blog post. Lorem ipsum dolor sit amet,",
 			"\t\t\t\tconsectetur adipiscing elit.",
-			"\t\t\t\t```"
+			"\t\t\t\t```",
 		];
 
 		expect(formatGherkinLines(input)).toEqual(expected);
@@ -378,7 +377,7 @@ describe("formatGherkinLines", () => {
 			"| Julien | julien@cucumber.io | @jbpros|",
 			"| Matt   | matt@cucumber.io   | @mattwynne|",
 			"When slecting one",
-			"Then it is highlited"
+			"Then it is highlited",
 		];
 
 		const expected = [
@@ -397,7 +396,91 @@ describe("formatGherkinLines", () => {
 			"\t\t\t\t| Julien | julien@cucumber.io | @jbpros         |",
 			"\t\t\t\t| Matt   | matt@cucumber.io   | @mattwynne      |",
 			"\t\t\tWhen slecting one",
-			"\t\t\tThen it is highlited"
+			"\t\t\tThen it is highlited",
+		];
+
+		expect(formatGherkinLines(input)).toEqual(expected);
+	});
+
+	test("should format Feature with tags and comments", () => {
+		const input = [
+			"@feature_tag @smoke",
+			"Feature: Tagged Feature",
+			"# This is a comment about the feature",
+			"",
+			"@scenario_tag",
+			"Scenario: Tagged Scenario",
+			"Given I have a step",
+			"# Comment inside scenario",
+			"But I have another condition",
+		];
+
+		const expected = [
+			"\t@feature_tag @smoke",
+			"Feature: Tagged Feature",
+			"\t# This is a comment about the feature",
+			"",
+			"\t@scenario_tag",
+			"\tScenario: Tagged Scenario",
+			"\t\tGiven I have a step",
+			"\t\t# Comment inside scenario",
+			"\t\tBut I have another condition",
+		];
+
+		expect(formatGherkinLines(input)).toEqual(expected);
+	});
+
+	test("should format feature using alternative keywords (Business, Scenario Template, Scenarios)", () => {
+		const input = [
+			"Business: Alternative Feature Keyword",
+			"",
+			"Scenario Template: Templated scenario",
+			"Given I have <value>",
+			"When I check <value>",
+			"Then result is valid",
+			"",
+			"Scenarios:",
+			"|value|",
+			"| 10  |",
+		];
+
+		const expected = [
+			"Business: Alternative Feature Keyword",
+			"",
+			"\tScenario Template: Templated scenario",
+			"\t\tGiven I have <value>",
+			"\t\tWhen I check <value>",
+			"\t\tThen result is valid",
+			"",
+			"\t\tScenarios:",
+			"\t\t\t| value |",
+			"\t\t\t| 10    |",
+		];
+
+		expect(formatGherkinLines(input)).toEqual(expected);
+	});
+
+	test("should format Data Tables attached to step outside of Rule", () => {
+		const input = [
+			"Feature: Data table outside rule",
+			"",
+			"Scenario: Simple scenario with table",
+			"Given the following items:",
+			"| item | price |",
+			"| apple | 1.00 |",
+			"| banana | 0.50 |",
+			"Then total items count is 2",
+		];
+
+		const expected = [
+			"Feature: Data table outside rule",
+			"",
+			"\tScenario: Simple scenario with table",
+			"\t\tGiven the following items:",
+			"\t\t\t\t| item   | price |",
+			"\t\t\t\t| apple  | 1.00  |",
+			"\t\t\t\t| banana | 0.50  |",
+			"\t\tThen total items count is 2",
 		];
 
 		expect(formatGherkinLines(input)).toEqual(expected);
@@ -410,7 +493,14 @@ describe("formatGherkinString", () => {
 
 		const expected = "Feature: Test feature";
 
-		expect(formatGherkinString(input, {inFeature: false, inRule: false, inScenario:false, inDocString: false})).toEqual(expected);
+		expect(
+			formatGherkinString(input, {
+				inFeature: false,
+				inRule: false,
+				inScenario: false,
+				inDocString: false,
+			}),
+		).toEqual(expected);
 	});
 
 	test("should handle mixed content", () => {
@@ -418,7 +508,14 @@ describe("formatGherkinString", () => {
 
 		const expected = "\tScenario Outline: Login test";
 
-		expect(formatGherkinString(input, {inFeature: false, inRule: false, inScenario:false, inDocString: false})).toEqual(expected);
+		expect(
+			formatGherkinString(input, {
+				inFeature: false,
+				inRule: false,
+				inScenario: false,
+				inDocString: false,
+			}),
+		).toEqual(expected);
 	});
 
 	test("should handle empty lines", () => {
@@ -426,7 +523,14 @@ describe("formatGherkinString", () => {
 
 		const expected = "";
 
-		expect(formatGherkinString(input, {inFeature: false, inRule: false, inScenario:false, inDocString: false})).toEqual(expected);
+		expect(
+			formatGherkinString(input, {
+				inFeature: false,
+				inRule: false,
+				inScenario: false,
+				inDocString: false,
+			}),
+		).toEqual(expected);
 	});
 });
 

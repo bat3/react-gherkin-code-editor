@@ -1,5 +1,5 @@
-import { forwardRef, type HTMLAttributes, useImperativeHandle } from "react";
-import { useRef, useState, useEffect } from "react";
+import { type HTMLAttributes, forwardRef, useImperativeHandle } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Editor as EditorClass } from "../lib/Editor";
 
 export type EditorProps = {

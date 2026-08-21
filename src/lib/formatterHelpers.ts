@@ -72,6 +72,9 @@ export function formatGherkinLines(lines: string[]): string[] {
 		// Any scenario/example line marks that we're inside a scenario
 		if (
 			gherkinKeywords.Scenario.some((keyword) => line.startsWith(keyword)) ||
+			gherkinKeywords.ScenarioOutline.some((keyword) =>
+				line.startsWith(keyword),
+			) ||
 			gherkinKeywords.Background.some((keyword) => line.startsWith(keyword))
 		) {
 			inScenario = true;
@@ -149,10 +152,7 @@ export function formatGherkinLines(lines: string[]): string[] {
  * Generic helper to format a Gherkin table (Examples or data table)
  * by aligning columns and applying a given indentation level.
  */
-function formatTableLines(
-	tableLines: string[],
-	indentTabs: number,
-): string[] {
+function formatTableLines(tableLines: string[], indentTabs: number): string[] {
 	if (tableLines.length === 0) return [];
 
 	const rows = tableLines.map((line) =>
@@ -188,7 +188,10 @@ const baseIndentForSteps = (context: GherkinContext) => {
  * Formats an Examples table by aligning columns
  * (always 3 tabs of indentation).
  */
-function formatExamplesTable(tableLines: string[], context: GherkinContext): string[] {
+function formatExamplesTable(
+	tableLines: string[],
+	context: GherkinContext,
+): string[] {
 	return formatTableLines(tableLines, baseIndentForSteps(context) + 1);
 }
 
@@ -210,11 +213,8 @@ interface GherkinContext {
 export function formatGherkinString(
 	line: string,
 	context: GherkinContext,
-):  string {
-
+): string {
 	const trimmedLine = line.trimStart();
-
-	
 
 	// Doc string delimiters and body: opening, content, and closing at step+1
 	if (gherkinKeywords.DocString.some((keyword) => trimmedLine === keyword)) {
@@ -231,7 +231,9 @@ export function formatGherkinString(
 	}
 
 	// Feature
-	if (gherkinKeywords.Feature.some((keyword) => trimmedLine.startsWith(keyword))) {
+	if (
+		gherkinKeywords.Feature.some((keyword) => trimmedLine.startsWith(keyword))
+	) {
 		return trimmedLine;
 	}
 
@@ -240,11 +242,26 @@ export function formatGherkinString(
 		return `\t${trimmedLine}`;
 	}
 
+	// Examples headers keep previous behaviour (must check before Scenario because "Scenarios" starts with "Scenario")
+	if (
+		gherkinKeywords.Examples.some((keyword) => trimmedLine.startsWith(keyword))
+	) {
+		const baseIndent = baseIndentForSteps(context);
+		const indentLevel = baseIndent;
+		return `${"\t".repeat(indentLevel)}${trimmedLine}`;
+	}
+
 	// Scenario / Example / tags headers
 	if (
-		gherkinKeywords.Scenario.some((keyword) => trimmedLine.startsWith(keyword)) ||
-		gherkinKeywords.ScenarioOutline.some((keyword) => trimmedLine.startsWith(keyword)) ||
-		gherkinKeywords.Background.some((keyword) => trimmedLine.startsWith(keyword)) ||
+		gherkinKeywords.Scenario.some((keyword) =>
+			trimmedLine.startsWith(keyword),
+		) ||
+		gherkinKeywords.ScenarioOutline.some((keyword) =>
+			trimmedLine.startsWith(keyword),
+		) ||
+		gherkinKeywords.Background.some((keyword) =>
+			trimmedLine.startsWith(keyword),
+		) ||
 		gherkinKeywords.Tag.some((keyword) => trimmedLine.startsWith(keyword))
 	) {
 		let indentLevel = 1;
@@ -255,15 +272,6 @@ export function formatGherkinString(
 			indentLevel = 1;
 		}
 
-		return `${"\t".repeat(indentLevel)}${trimmedLine}`;
-	}
-
-	// Examples headers keep previous behaviour
-	if (
-		gherkinKeywords.Examples.some((keyword) => trimmedLine.startsWith(keyword))
-	) {
-		const baseIndent = baseIndentForSteps(context);
-		const indentLevel = baseIndent;
 		return `${"\t".repeat(indentLevel)}${trimmedLine}`;
 	}
 
@@ -283,9 +291,11 @@ export function formatGherkinString(
 		return `${"\t".repeat(indentLevel)}${trimmedLine}`;
 	}
 
-	// Description lines directly under a Feature
-	if (context.inFeature && !context.inScenario) {
-		return `\t${trimmedLine}`;
+	// Comments or description lines directly under Feature or Scenario
+	if (context.inFeature) {
+		const baseIndent = baseIndentForSteps(context);
+		const indentLevel = context.inScenario ? baseIndent : 1;
+		return `${"\t".repeat(indentLevel)}${trimmedLine}`;
 	}
 
 	return line;
