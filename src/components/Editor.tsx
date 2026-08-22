@@ -1,5 +1,5 @@
-import { forwardRef, type HTMLAttributes, useImperativeHandle } from "react";
-import { useRef, useState, useEffect } from "react";
+import { type HTMLAttributes, forwardRef, useImperativeHandle } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Editor as EditorClass } from "../lib/Editor";
 
 export type EditorProps = {
@@ -68,6 +68,6 @@ export const Editor = forwardRef<EditorExposeMethods, EditorProps>(
 			layout,
 		}));
 
-		return <div {...props} ref={divEditorRef} />;
+		return <div data-testid="gherkin-editor" {...props} ref={divEditorRef} />;
 	},
 );
