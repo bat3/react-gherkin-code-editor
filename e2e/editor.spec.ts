@@ -8,15 +8,16 @@ function normalizeSpaces(text: string): string {
 test.describe("Gherkin Code Editor E2E Tests", () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto("/");
-		await page.waitForSelector(".monaco-editor");
+		await page.waitForSelector('[data-testid="gherkin-editor"] .monaco-editor');
 	});
 
 	test("should render page heading and editor component", async ({ page }) => {
 		await expect(page.locator("h3")).toHaveText("Give me a Gherkin");
-		await expect(page.locator(".monaco-editor")).toBeVisible();
+		const editor = page.getByTestId("gherkin-editor");
+		await expect(editor).toBeVisible();
 
 		// Check initial editor content contains expected keywords and feature title
-		const rawText = await page.locator(".monaco-editor").innerText();
+		const rawText = await editor.innerText();
 		const editorText = normalizeSpaces(rawText);
 
 		expect(editorText).toContain("Feature: Calculator");
@@ -29,7 +30,8 @@ test.describe("Gherkin Code Editor E2E Tests", () => {
 	}) => {
 		// Keywords like "Feature:" are styled with bold class mtkb and theme color (#7dd956 / rgb(125, 217, 86))
 		const keywordSpan = page
-			.locator(".monaco-editor .view-line .mtkb", { hasText: "Feature:" })
+			.getByTestId("gherkin-editor")
+			.locator(".view-line .mtkb", { hasText: "Feature:" })
 			.first();
 		await expect(keywordSpan).toBeVisible();
 
@@ -39,10 +41,10 @@ test.describe("Gherkin Code Editor E2E Tests", () => {
 		expect(color).toBe("rgb(125, 217, 86)");
 	});
 
-	test('should format Gherkin text when clicking "Format my Gherkin !"', async ({
+	test("should format Gherkin text when clicking format button", async ({
 		page,
 	}) => {
-		const formatBtn = page.getByRole("button", { name: "Format my Gherkin !" });
+		const formatBtn = page.getByTestId("format-button");
 		await expect(formatBtn).toBeVisible();
 
 		// Click format button
@@ -50,31 +52,35 @@ test.describe("Gherkin Code Editor E2E Tests", () => {
 		await page.waitForTimeout(500);
 
 		// Verify editor content table lines are aligned with proper padding
-		const rawText = await page.locator(".monaco-editor").innerText();
+		const rawText = await page.getByTestId("gherkin-editor").innerText();
 		const editorText = normalizeSpaces(rawText);
 
 		expect(editorText).toContain("| First | Second | Result |");
 		expect(editorText).toContain("| 50    | 70     | 120    |");
 	});
 
-	test('should toggle dark theme when clicking "Dark"', async ({ page }) => {
-		const darkBtn = page.getByRole("button", { name: "Dark" });
+	test("should toggle dark theme when clicking dark theme button", async ({
+		page,
+	}) => {
+		const darkBtn = page.getByTestId("dark-theme-button");
 		await expect(darkBtn).toBeVisible();
 
+		const monaco = page.getByTestId("gherkin-editor").locator(".monaco-editor");
+
 		// Before clicking, theme is light (vs)
-		await expect(page.locator(".monaco-editor")).toHaveClass(/vs(?!\-dark)/);
+		await expect(monaco).toHaveClass(/vs(?!\-dark)/);
 
 		// Click "Dark"
 		await darkBtn.click();
 
 		// After clicking, theme changes to vs-dark
-		await expect(page.locator(".monaco-editor")).toHaveClass(/vs-dark/);
+		await expect(monaco).toHaveClass(/vs-dark/);
 	});
 
 	test("should copy editor content to clipboard", async ({ page, context }) => {
 		await context.grantPermissions(["clipboard-read", "clipboard-write"]);
 
-		const copyBtn = page.getByRole("button", { name: "copy to clipboard" });
+		const copyBtn = page.getByTestId("copy-button");
 		await expect(copyBtn).toBeVisible();
 
 		await copyBtn.click();
@@ -87,10 +93,10 @@ test.describe("Gherkin Code Editor E2E Tests", () => {
 	});
 
 	test("should toggle editor container size", async ({ page }) => {
-		const toggleBtn = page.getByRole("button", { name: "Toggle size" });
+		const toggleBtn = page.getByTestId("toggle-size-button");
 		await expect(toggleBtn).toBeVisible();
 
-		const container = page.locator(".monaco-editor").locator("..");
+		const container = page.getByTestId("gherkin-editor");
 		const initialBox = await container.boundingBox();
 		expect(initialBox).not.toBeNull();
 
@@ -117,7 +123,9 @@ test.describe("Gherkin Code Editor E2E Tests", () => {
 
 	test("should allow typing new Gherkin steps in editor", async ({ page }) => {
 		// Focus monaco editor textarea
-		const textarea = page.locator(".monaco-editor textarea");
+		const textarea = page
+			.getByTestId("gherkin-editor")
+			.locator(".monaco-editor textarea");
 		await textarea.focus();
 
 		// Select all and delete initial text
@@ -131,7 +139,7 @@ test.describe("Gherkin Code Editor E2E Tests", () => {
 		);
 		await page.keyboard.press("Escape");
 
-		const rawText = await page.locator(".monaco-editor").innerText();
+		const rawText = await page.getByTestId("gherkin-editor").innerText();
 		const editorText = normalizeSpaces(rawText);
 
 		expect(editorText).toContain("Feature: New E2E Feature");

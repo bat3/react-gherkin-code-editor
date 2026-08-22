@@ -1,12 +1,12 @@
 import React, { useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { type EditorExposeMethods, Editor } from "./components/Editor";
+import { Editor, type EditorExposeMethods } from "./components/Editor";
 
 // Monaco web workers wiring for Vite
 import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
-import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
 import CssWorker from "monaco-editor/esm/vs/language/css/css.worker?worker";
 import HtmlWorker from "monaco-editor/esm/vs/language/html/html.worker?worker";
+import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
 import TsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
 
 type MonacoEnvironmentType = {
@@ -61,6 +61,7 @@ const Page = () => {
 		<main style={{ height: "70vh" }}>
 			<h3>Give me a Gherkin</h3>
 			<Editor
+				data-testid="gherkin-editor"
 				style={{
 					width: isBig ? "100%" : "350px",
 					height: isBig ? "100%" : "250px",
@@ -71,6 +72,7 @@ const Page = () => {
 			/>
 			<input
 				type="button"
+				data-testid="format-button"
 				value="Format my Gherkin !"
 				onClick={() => {
 					editorRef.current?.format();
@@ -78,6 +80,7 @@ const Page = () => {
 			/>
 			<input
 				type="button"
+				data-testid="dark-theme-button"
 				value="Dark"
 				onClick={() => {
 					editorRef.current?.updateTheme();
@@ -85,6 +88,7 @@ const Page = () => {
 			/>
 			<input
 				type="button"
+				data-testid="copy-button"
 				value="copy to clipboard"
 				onClick={() => {
 					navigator.clipboard.writeText(editorRef.current?.getCode() ?? "");
@@ -92,6 +96,7 @@ const Page = () => {
 			/>
 			<input
 				type="button"
+				data-testid="toggle-size-button"
 				value="Toggle size"
 				onClick={() => {
 					setIsBig(!isBig);
