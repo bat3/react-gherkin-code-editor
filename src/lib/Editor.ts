@@ -1,6 +1,6 @@
+import * as monaco2 from "monaco-editor";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { formatGherkinLines } from "./formatterHelpers";
-import * as monaco2 from "monaco-editor";
 
 export class Editor {
 	editor: monaco.editor.IStandaloneCodeEditor;
@@ -124,7 +124,11 @@ export class Editor {
 					foreground: "7dd956",
 					fontStyle: "bold",
 				},
-				{ token: "secondary-keyword", foreground: "7dd956", fontStyle: "italic" },
+				{
+					token: "secondary-keyword",
+					foreground: "7dd956",
+					fontStyle: "italic",
+				},
 			],
 			colors: {
 				"editor.foreground": "#000000",
@@ -140,7 +144,11 @@ export class Editor {
 					foreground: "7dd956",
 					fontStyle: "bold",
 				},
-				{ token: "secondary-keyword", foreground: "7dd956", fontStyle: "italic" },
+				{
+					token: "secondary-keyword",
+					foreground: "7dd956",
+					fontStyle: "italic",
+				},
 			],
 			colors: {
 				"editor.foreground": "#ffffff",
