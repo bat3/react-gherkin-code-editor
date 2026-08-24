@@ -149,10 +149,7 @@ export function formatGherkinLines(lines: string[]): string[] {
  * Generic helper to format a Gherkin table (Examples or data table)
  * by aligning columns and applying a given indentation level.
  */
-function formatTableLines(
-	tableLines: string[],
-	indentTabs: number,
-): string[] {
+function formatTableLines(tableLines: string[], indentTabs: number): string[] {
 	if (tableLines.length === 0) return [];
 
 	const rows = tableLines.map((line) =>
@@ -188,7 +185,10 @@ const baseIndentForSteps = (context: GherkinContext) => {
  * Formats an Examples table by aligning columns
  * (always 3 tabs of indentation).
  */
-function formatExamplesTable(tableLines: string[], context: GherkinContext): string[] {
+function formatExamplesTable(
+	tableLines: string[],
+	context: GherkinContext,
+): string[] {
 	return formatTableLines(tableLines, baseIndentForSteps(context) + 1);
 }
 
@@ -210,11 +210,8 @@ interface GherkinContext {
 export function formatGherkinString(
 	line: string,
 	context: GherkinContext,
-):  string {
-
+): string {
 	const trimmedLine = line.trimStart();
-
-	
 
 	// Doc string delimiters and body: opening, content, and closing at step+1
 	if (gherkinKeywords.DocString.some((keyword) => trimmedLine === keyword)) {
@@ -231,7 +228,9 @@ export function formatGherkinString(
 	}
 
 	// Feature
-	if (gherkinKeywords.Feature.some((keyword) => trimmedLine.startsWith(keyword))) {
+	if (
+		gherkinKeywords.Feature.some((keyword) => trimmedLine.startsWith(keyword))
+	) {
 		return trimmedLine;
 	}
 
@@ -242,9 +241,15 @@ export function formatGherkinString(
 
 	// Scenario / Example / tags headers
 	if (
-		gherkinKeywords.Scenario.some((keyword) => trimmedLine.startsWith(keyword)) ||
-		gherkinKeywords.ScenarioOutline.some((keyword) => trimmedLine.startsWith(keyword)) ||
-		gherkinKeywords.Background.some((keyword) => trimmedLine.startsWith(keyword)) ||
+		gherkinKeywords.Scenario.some((keyword) =>
+			trimmedLine.startsWith(keyword),
+		) ||
+		gherkinKeywords.ScenarioOutline.some((keyword) =>
+			trimmedLine.startsWith(keyword),
+		) ||
+		gherkinKeywords.Background.some((keyword) =>
+			trimmedLine.startsWith(keyword),
+		) ||
 		gherkinKeywords.Tag.some((keyword) => trimmedLine.startsWith(keyword))
 	) {
 		let indentLevel = 1;
