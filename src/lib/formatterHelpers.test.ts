@@ -17,13 +17,39 @@ describe("formatGherkinLines", () => {
 		];
 
 		const expected = [
-			"\tScenario Outline: Login test",
-			"\t\tGiven I am on login page",
-			"\t\tExamples:",
-			"\t\t\t| username | password | status  |",
-			"\t\t\t| john     | pass123  | success |",
-			"\t\t\t| mary     | pass456  | failure |",
-			"\tScenario: Another test",
+			"Scenario Outline: Login test",
+			"\tGiven I am on login page",
+			"\tExamples:",
+			"\t\t| username | password | status  |",
+			"\t\t| john     | pass123  | success |",
+			"\t\t| mary     | pass456  | failure |",
+			"Scenario: Another test",
+		];
+
+		expect(formatGherkinLines(input)).toEqual(expected);
+	});
+
+	test("should handle mixed content with tables qnd tags", () => {
+		const input = [
+			"@tag1 @tag2",
+			"Scenario Outline: Login test",
+			"    Given I am on login page",
+			"Examples:",
+			"|username|password |status|",
+			" |john|pass123|success|",
+			"|mary|pass456|failure |",
+			"Scenario: Another test",
+		];
+
+		const expected = [
+			"@tag1 @tag2",
+			"Scenario Outline: Login test",
+			"\tGiven I am on login page",
+			"\tExamples:",
+			"\t\t| username | password | status  |",
+			"\t\t| john     | pass123  | success |",
+			"\t\t| mary     | pass456  | failure |",
+			"Scenario: Another test",
 		];
 
 		expect(formatGherkinLines(input)).toEqual(expected);
