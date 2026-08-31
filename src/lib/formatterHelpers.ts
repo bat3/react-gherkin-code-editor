@@ -175,8 +175,11 @@ const baseIndentForSteps = (context: GherkinContext) => {
 	if (context.inRule && context.inScenario) {
 		return 3;
 	}
-	if (context.inScenario) {
+	if (context.inFeature && context.inScenario) {
 		return 2;
+	}
+	if (context.inScenario) {
+		return 1;
 	}
 	return 0;
 };
@@ -252,7 +255,7 @@ export function formatGherkinString(
 		) ||
 		gherkinKeywords.Tag.some((keyword) => trimmedLine.startsWith(keyword))
 	) {
-		let indentLevel = 1;
+		let indentLevel = 0;
 
 		if (context.inRule) {
 			indentLevel = 2;
@@ -284,7 +287,7 @@ export function formatGherkinString(
 			return trimmedLine;
 		}
 
-		const indentLevel = context.inRule ? 3 : 2;
+		const indentLevel = baseIndentForSteps(context);
 		return `${"\t".repeat(indentLevel)}${trimmedLine}`;
 	}
 
