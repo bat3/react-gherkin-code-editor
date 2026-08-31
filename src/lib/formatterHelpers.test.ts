@@ -448,11 +448,26 @@ describe("formatGherkinString", () => {
 	test("should handle mixed content", () => {
 		const input = "Scenario Outline: Login test";
 
-		const expected = "\tScenario Outline: Login test";
+		const expected = "Scenario Outline: Login test";
 
 		expect(
 			formatGherkinString(input, {
 				inFeature: false,
+				inRule: false,
+				inScenario: false,
+				inDocString: false,
+			}),
+		).toEqual(expected);
+	});
+
+	test("should handle scenario inside feature", () => {
+		const input = "Scenario Outline: Login test";
+
+		const expected = "\tScenario Outline: Login test";
+
+		expect(
+			formatGherkinString(input, {
+				inFeature: true,
 				inRule: false,
 				inScenario: false,
 				inDocString: false,
