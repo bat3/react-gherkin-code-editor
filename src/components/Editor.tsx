@@ -18,17 +18,23 @@ export const Editor = forwardRef<EditorExposeMethods, EditorProps>(
 		const [editor, setEditor] = useState<EditorClass>();
 		const divEditorRef = useRef<HTMLDivElement>(null);
 
+		// biome-ignore lint/correctness/useExhaustiveDependencies: mount/unmount lifecycle only; props.code dynamic updates are handled in separate useEffect below
 		useEffect(() => {
-			if (divEditorRef) {
-				setEditor((editor) => {
-					if (editor) return editor;
-					if (divEditorRef.current)
-						return new EditorClass(divEditorRef.current, props.code);
-				});
+			if (!divEditorRef.current) return;
+
+			const editorInstance = new EditorClass(divEditorRef.current, props.code);
+			setEditor(editorInstance);
+
+			return () => {
+				editorInstance.dispose();
+			};
+		}, []);
+
+		useEffect(() => {
+			if (editor && props.code !== undefined) {
+				editor.setValue(props.code);
 			}
-			// Todo
-			//return () => editor?.dispose();
-		}, [props.code]);
+		}, [editor, props.code]);
 
 		// Handle resize events
 		useEffect(() => {
