@@ -1,6 +1,10 @@
 import React, { useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { Editor, type EditorExposeMethods } from "./components/Editor";
+import {
+	Editor,
+	type EditorExposeMethods,
+	type EditorTheme,
+} from "./components/Editor";
 
 // Monaco web workers wiring for Vite
 import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
@@ -57,6 +61,10 @@ const defaultGherkin = [
 const Page = () => {
 	const editorRef = useRef<EditorExposeMethods>(null);
 	const [isBig, setIsBig] = useState<boolean>(true);
+	const [editorContent, setEditorContent] = useState<string>(defaultGherkin);
+	const [editorTheme, setEditorTheme] = useState<EditorTheme>("light");
+	const [isReadOnly, setIsReadOnly] = useState<boolean>(false);
+
 	return (
 		<main style={{ height: "70vh" }}>
 			<h3>Give me a Gherkin</h3>
@@ -68,7 +76,10 @@ const Page = () => {
 					border: "1px solid rgb(0, 0, 0)",
 				}}
 				ref={editorRef}
-				code={defaultGherkin}
+				value={editorContent}
+				onChange={(newVal) => setEditorContent(newVal)}
+				theme={editorTheme}
+				readOnly={isReadOnly}
 			/>
 			<input
 				type="button"
@@ -83,7 +94,23 @@ const Page = () => {
 				data-testid="dark-theme-button"
 				value="Dark"
 				onClick={() => {
-					editorRef.current?.updateTheme();
+					setEditorTheme("dark");
+				}}
+			/>
+			<input
+				type="button"
+				data-testid="light-theme-button"
+				value="Light"
+				onClick={() => {
+					setEditorTheme("light");
+				}}
+			/>
+			<input
+				type="button"
+				data-testid="toggle-readonly-button"
+				value={isReadOnly ? "Make Editable" : "Make ReadOnly"}
+				onClick={() => {
+					setIsReadOnly(!isReadOnly);
 				}}
 			/>
 			<input
@@ -102,6 +129,9 @@ const Page = () => {
 					setIsBig(!isBig);
 				}}
 			/>
+			<div data-testid="content-preview" style={{ marginTop: "10px" }}>
+				<strong>Live Content Length:</strong> {editorContent.length}
+			</div>
 		</main>
 	);
 };

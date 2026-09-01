@@ -1,10 +1,18 @@
 import { type HTMLAttributes, forwardRef, useImperativeHandle } from "react";
 import { useEffect, useRef, useState } from "react";
-import { Editor as EditorClass } from "../lib/Editor";
+import { Editor as EditorClass, type EditorTheme } from "../lib/Editor";
 
-export type EditorProps = {
+export type { EditorTheme };
+
+export interface EditorProps
+	extends Omit<HTMLAttributes<HTMLDivElement>, "onChange"> {
 	code?: string;
-} & HTMLAttributes<HTMLDivElement>;
+	value?: string;
+	onChange?: (value: string) => void;
+	theme?: EditorTheme;
+	language?: string;
+	readOnly?: boolean;
+}
 
 export interface EditorExposeMethods {
 	format: () => void;
@@ -15,14 +23,47 @@ export interface EditorExposeMethods {
 
 export const Editor = forwardRef<EditorExposeMethods, EditorProps>(
 	(props, ref) => {
+		const { code, value, onChange, theme, language, readOnly, ...divProps } =
+			props;
+
 		const [editor, setEditor] = useState<EditorClass>();
 		const divEditorRef = useRef<HTMLDivElement>(null);
 
-		// biome-ignore lint/correctness/useExhaustiveDependencies: mount/unmount lifecycle only; props.code dynamic updates are handled in separate useEffect below
+		// Store initial props in ref for constructor on mount
+		const initialPropsRef = useRef({
+			code,
+			value,
+			onChange,
+			theme,
+			language,
+			readOnly,
+		});
+
+		// Keep latest onChange ref to avoid unnecessary re-subscriptions or stale closures
+		const onChangeRef = useRef(onChange);
+		useEffect(() => {
+			onChangeRef.current = onChange;
+			if (editor) {
+				editor.setOnChange((val) => {
+					onChangeRef.current?.(val);
+				});
+			}
+		}, [editor, onChange]);
+
+		// Mount/unmount lifecycle only
 		useEffect(() => {
 			if (!divEditorRef.current) return;
 
-			const editorInstance = new EditorClass(divEditorRef.current, props.code);
+			const editorInstance = new EditorClass(divEditorRef.current, {
+				code: initialPropsRef.current.code,
+				value: initialPropsRef.current.value,
+				theme: initialPropsRef.current.theme,
+				language: initialPropsRef.current.language,
+				readOnly: initialPropsRef.current.readOnly,
+				onChange: (val) => {
+					onChangeRef.current?.(val);
+				},
+			});
 			setEditor(editorInstance);
 
 			return () => {
@@ -30,11 +71,39 @@ export const Editor = forwardRef<EditorExposeMethods, EditorProps>(
 			};
 		}, []);
 
+		// Handle content updates (value or code)
 		useEffect(() => {
-			if (editor && props.code !== undefined) {
-				editor.setValue(props.code);
+			if (editor) {
+				const currentPropValue = value ?? code;
+				if (
+					currentPropValue !== undefined &&
+					editor.getCode() !== currentPropValue
+				) {
+					editor.setValue(currentPropValue);
+				}
 			}
-		}, [editor, props.code]);
+		}, [editor, value, code]);
+
+		// Handle theme updates
+		useEffect(() => {
+			if (editor && theme !== undefined) {
+				editor.setTheme(theme);
+			}
+		}, [editor, theme]);
+
+		// Handle language updates
+		useEffect(() => {
+			if (editor && language !== undefined) {
+				editor.setLanguage(language);
+			}
+		}, [editor, language]);
+
+		// Handle readOnly updates
+		useEffect(() => {
+			if (editor && readOnly !== undefined) {
+				editor.setReadOnly(readOnly);
+			}
+		}, [editor, readOnly]);
 
 		// Handle resize events
 		useEffect(() => {
@@ -74,6 +143,8 @@ export const Editor = forwardRef<EditorExposeMethods, EditorProps>(
 			layout,
 		}));
 
-		return <div data-testid="gherkin-editor" {...props} ref={divEditorRef} />;
+		return (
+			<div data-testid="gherkin-editor" {...divProps} ref={divEditorRef} />
+		);
 	},
 );
