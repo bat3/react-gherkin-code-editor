@@ -59,22 +59,71 @@ test.describe("Gherkin Code Editor E2E Tests", () => {
 		expect(editorText).toContain("| 50    | 70     | 120    |");
 	});
 
-	test("should toggle dark theme when clicking dark theme button", async ({
+	test("should toggle dark and light themes dynamically via theme prop", async ({
 		page,
 	}) => {
 		const darkBtn = page.getByTestId("dark-theme-button");
+		const lightBtn = page.getByTestId("light-theme-button");
 		await expect(darkBtn).toBeVisible();
+		await expect(lightBtn).toBeVisible();
 
 		const monaco = page.getByTestId("gherkin-editor").locator(".monaco-editor");
 
-		// Before clicking, theme is light (vs)
+		// Initially theme is light (vs)
 		await expect(monaco).toHaveClass(/vs(?!\-dark)/);
 
 		// Click "Dark"
 		await darkBtn.click();
-
-		// After clicking, theme changes to vs-dark
 		await expect(monaco).toHaveClass(/vs-dark/);
+
+		// Click "Light" to switch back dynamically
+		await lightBtn.click();
+		await expect(monaco).toHaveClass(/vs(?!\-dark)/);
+	});
+
+	test("should trigger onChange callback and update state when typing in editor", async ({
+		page,
+	}) => {
+		const preview = page.getByTestId("content-preview");
+		await expect(preview).toBeVisible();
+
+		const initialPreviewText = await preview.innerText();
+
+		const textarea = page
+			.getByTestId("gherkin-editor")
+			.locator(".monaco-editor textarea");
+		await textarea.focus();
+
+		// Type new text
+		await page.keyboard.type("\n# additional comment");
+		await page.waitForTimeout(200);
+
+		const updatedPreviewText = await preview.innerText();
+		expect(updatedPreviewText).not.toBe(initialPreviewText);
+	});
+
+	test("should respect readOnly prop toggle", async ({ page }) => {
+		const readOnlyBtn = page.getByTestId("toggle-readonly-button");
+		await expect(readOnlyBtn).toBeVisible();
+
+		// Toggle readOnly on
+		await readOnlyBtn.click();
+
+		const preview = page.getByTestId("content-preview");
+		const textBeforeTyping = await preview.innerText();
+
+		const textarea = page
+			.getByTestId("gherkin-editor")
+			.locator(".monaco-editor textarea");
+		await textarea.focus();
+
+		// Attempt typing while readOnly
+		await page.keyboard.type("Attempted edit when readOnly");
+		await page.waitForTimeout(200);
+
+		const textAfterTyping = await preview.innerText();
+		// Content should remain unchanged because editor is readOnly
+		expect(textAfterTyping).toBe(textBeforeTyping);
 	});
 
 	test("should copy editor content to clipboard", async ({ page, context }) => {

@@ -1,7 +1,14 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-import { Editor, ensureMonacoGherkinRegistered } from "./Editor";
+import { Editor, ensureMonacoGherkinRegistered, resolveTheme } from "./Editor";
+
+let onDidChangeModelContentListener: (() => void) | null = null;
+let currentModelLanguage = "GherkinLanguage-en";
 
 jest.mock("monaco-editor/esm/vs/editor/editor.api", () => {
+	const mockModel = {
+		getLanguageId: jest.fn(() => currentModelLanguage),
+	};
+
 	const mockEditorInstance = {
 		dispose: jest.fn(),
 		getAction: jest.fn(),
@@ -9,6 +16,11 @@ jest.mock("monaco-editor/esm/vs/editor/editor.api", () => {
 		getValue: jest.fn().mockReturnValue(""),
 		setValue: jest.fn(),
 		layout: jest.fn(),
+		getModel: jest.fn().mockReturnValue(mockModel),
+		onDidChangeModelContent: jest.fn((callback) => {
+			onDidChangeModelContentListener = callback;
+			return { dispose: jest.fn() };
+		}),
 	};
 
 	return {
@@ -26,6 +38,10 @@ jest.mock("monaco-editor/esm/vs/editor/editor.api", () => {
 		},
 		editor: {
 			defineTheme: jest.fn(),
+			setTheme: jest.fn(),
+			setModelLanguage: jest.fn((_model, lang) => {
+				currentModelLanguage = lang;
+			}),
 			create: jest.fn().mockReturnValue(mockEditorInstance),
 		},
 	};
@@ -41,12 +57,25 @@ jest.mock(
 	{ virtual: true },
 );
 
+describe("resolveTheme function", () => {
+	test("resolves light and dark theme aliases correctly", () => {
+		expect(resolveTheme("light")).toBe("defaultLightTheme");
+		expect(resolveTheme("dark")).toBe("defaultDarkTheme");
+		expect(resolveTheme("defaultLightTheme")).toBe("defaultLightTheme");
+		expect(resolveTheme("defaultDarkTheme")).toBe("defaultDarkTheme");
+		expect(resolveTheme("vs-dark")).toBe("vs-dark");
+		expect(resolveTheme(undefined)).toBe("defaultLightTheme");
+	});
+});
+
 describe("Editor class", () => {
 	let container: HTMLDivElement;
 
 	beforeEach(() => {
 		jest.clearAllMocks();
 		container = {} as HTMLDivElement;
+		onDidChangeModelContentListener = null;
+		currentModelLanguage = "GherkinLanguage-en";
 	});
 
 	test("ensureMonacoGherkinRegistered should register languages, themes, providers idempotently", () => {
@@ -71,16 +100,89 @@ describe("Editor class", () => {
 		).toHaveBeenCalledTimes(1);
 	});
 
-	test("Editor constructor initializes Monaco editor with code", () => {
-		const editor = new Editor(container, "Feature: Test");
+	test("Editor constructor initializes Monaco editor with code and options", () => {
+		const editor = new Editor(container, {
+			code: "Feature: Test",
+			theme: "dark",
+			readOnly: true,
+			language: "GherkinLanguage-en",
+		});
+
 		expect(monaco.editor.create).toHaveBeenCalledWith(
 			container,
 			expect.objectContaining({
 				value: "Feature: Test",
+				theme: "defaultDarkTheme",
 				language: "GherkinLanguage-en",
+				readOnly: true,
 			}),
 		);
 		expect(editor.editor).toBeDefined();
+	});
+
+	test("Editor constructor initializes with string parameter for backward compatibility", () => {
+		new Editor(container, "Feature: Old API");
+		expect(monaco.editor.create).toHaveBeenCalledWith(
+			container,
+			expect.objectContaining({
+				value: "Feature: Old API",
+				theme: "defaultLightTheme",
+				readOnly: false,
+			}),
+		);
+	});
+
+	test("onDidChangeModelContent triggers onChange callback", () => {
+		const onChangeMock = jest.fn();
+		const editor = new Editor(container, {
+			code: "Initial",
+			onChange: onChangeMock,
+		});
+
+		(editor.editor.getValue as jest.Mock).mockReturnValue("Updated content");
+
+		// Simulate Monaco model content change
+		expect(onDidChangeModelContentListener).not.toBeNull();
+		onDidChangeModelContentListener?.();
+
+		expect(onChangeMock).toHaveBeenCalledWith("Updated content");
+	});
+
+	test("setTheme updates Monaco theme", () => {
+		const editor = new Editor(container);
+		editor.setTheme("dark");
+		expect(monaco.editor.setTheme).toHaveBeenCalledWith("defaultDarkTheme");
+
+		editor.setTheme("customTheme");
+		expect(monaco.editor.setTheme).toHaveBeenCalledWith("customTheme");
+	});
+
+	test("updateTheme calls setTheme with defaultDarkTheme for legacy support", () => {
+		const editor = new Editor(container);
+		editor.updateTheme();
+		expect(monaco.editor.setTheme).toHaveBeenCalledWith("defaultDarkTheme");
+	});
+
+	test("setReadOnly updates editor options", () => {
+		const editor = new Editor(container);
+		editor.setReadOnly(true);
+		expect(editor.editor.updateOptions).toHaveBeenCalledWith({
+			readOnly: true,
+		});
+
+		editor.setReadOnly(false);
+		expect(editor.editor.updateOptions).toHaveBeenCalledWith({
+			readOnly: false,
+		});
+	});
+
+	test("setLanguage sets model language", () => {
+		const editor = new Editor(container);
+		editor.setLanguage("custom-language");
+		expect(monaco.editor.setModelLanguage).toHaveBeenCalledWith(
+			expect.anything(),
+			"custom-language",
+		);
 	});
 
 	test("dispose() disposes underlying monaco editor instance", () => {
