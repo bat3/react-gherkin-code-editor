@@ -14,41 +14,84 @@ npm install react-gherkin-code-editor
 ```
 
 ## Usage
-Import Editor from react-gherkin-code-editor into your project, define some props and you're good to go!
+
+### Controlled Component Usage (Recommended)
 
 ```typescript
-import { type EditorExposeMethods, Editor } from "react-gherkin-code-editor";
+import { useState } from "react";
+import { Editor, type EditorTheme } from "react-gherkin-code-editor";
 
 const defaultGherkin = [
 	"Feature: Calculator",
 	"",
-	"Simple calculator for adding two numbers",
-	"",
-	"@Add",
-	"Scenario Outline: Add two numbers",
-	"Given I have entered <First> in the calculator",
-	"And I have entered <Second> into the calculator",
-	"When I press add",
-	"Then the result should be <Result> on the screen",
-	"",
-	"Examples:",
-	"  |   First    |  Second |   Result |",
-	"  | 50    | 70     | 120    |",
-	"  | 30    | 40     | 70     |",
-	"  | 60    | 30     | 90     |",
+	"Scenario: Add two numbers",
+	"  Given I have entered 50 into the calculator",
+	"  And I have entered 70 into the calculator",
+	'  When I press "add"',
+	"  Then the result should be 120 on the screen",
 ].join("\n");
 
 const EditorComponent = () => {
-	const editorRef = useRef<EditorExposeMethods>(null);
+	const [code, setCode] = useState(defaultGherkin);
+	const [theme, setTheme] = useState<EditorTheme>("light");
+
 	return (
-        <Editor
-            style={{ width: "700px", height: "500px" }}
-            ref={editorRef}
-            code={defaultGherkin}
-        />
+		<div>
+			<button onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
+				Toggle Theme ({theme})
+			</button>
+			<Editor
+				style={{ width: "700px", height: "500px" }}
+				value={code}
+				onChange={(newValue) => setCode(newValue)}
+				theme={theme}
+			/>
+		</div>
 	);
 };
 ```
+
+### Imperative Ref Usage (Legacy)
+
+```typescript
+import { useRef } from "react";
+import { type EditorExposeMethods, Editor } from "react-gherkin-code-editor";
+
+const EditorComponent = () => {
+	const editorRef = useRef<EditorExposeMethods>(null);
+
+	return (
+		<div>
+			<button onClick={() => editorRef.current?.format()}>Format</button>
+			<button onClick={() => editorRef.current?.updateTheme()}>Dark Theme</button>
+			<Editor
+				style={{ width: "700px", height: "500px" }}
+				ref={editorRef}
+				code="Feature: Calculator"
+			/>
+		</div>
+	);
+};
+```
+
+## Props API
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `value` | `string` | `undefined` | Controlled value of the editor content. |
+| `code` | `string` | `""` | Initial / uncontrolled content of the editor (alias for value). |
+| `onChange` | `(value: string) => void` | `undefined` | Callback invoked when the editor content changes. |
+| `theme` | `EditorTheme` (`"light"` \| `"dark"` \| `"defaultLightTheme"` \| `"defaultDarkTheme"` \| `string`) | `"light"` | Editor theme name or alias. Updates reactively when changed. |
+| `language` | `string` | `"GherkinLanguage-en"` | Monaco language ID. |
+| `readOnly` | `boolean` | `false` | Whether the editor is read-only. |
+| `...` | `HTMLAttributes<HTMLDivElement>` | | Standard HTML div attributes (`style`, `className`, `id`, `data-testid`, etc.). |
+
+## Imperative Ref Methods
+
+- `format()`: Formats the Gherkin content in the editor.
+- `updateTheme()`: Switches theme to dark (legacy helper).
+- `getCode()`: Returns the current code in the editor as a string.
+- `layout()`: Triggers Monaco editor layout recalculation.
 
 ## Contributing
 

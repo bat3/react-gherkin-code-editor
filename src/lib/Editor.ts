@@ -2,6 +2,32 @@ import * as monaco2 from "monaco-editor";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 import { formatGherkinLines } from "./formatterHelpers";
 
+export type EditorTheme =
+	| "light"
+	| "dark"
+	| "defaultLightTheme"
+	| "defaultDarkTheme"
+	| (string & {});
+
+export interface EditorOptions {
+	code?: string;
+	value?: string;
+	theme?: EditorTheme;
+	language?: string;
+	readOnly?: boolean;
+	onChange?: (value: string) => void;
+}
+
+export function resolveTheme(theme?: EditorTheme): string {
+	if (!theme || theme === "light") {
+		return "defaultLightTheme";
+	}
+	if (theme === "dark") {
+		return "defaultDarkTheme";
+	}
+	return theme;
+}
+
 let isMonacoRegistered = false;
 
 function registerLanguages() {
@@ -254,16 +280,33 @@ export function ensureMonacoGherkinRegistered() {
 
 export class Editor {
 	editor: monaco.editor.IStandaloneCodeEditor;
+	private onChangeCallback?: (value: string) => void;
 
-	constructor(elementRef: HTMLDivElement, code?: string) {
+	constructor(elementRef: HTMLDivElement, options?: string | EditorOptions) {
 		ensureMonacoGherkinRegistered();
 
+		const opts: EditorOptions =
+			typeof options === "string" ? { code: options } : (options ?? {});
+
+		const initialCode = opts.value ?? opts.code ?? "";
+		const initialTheme = resolveTheme(opts.theme);
+		const initialLanguage = opts.language ?? "GherkinLanguage-en";
+		const initialReadOnly = opts.readOnly ?? false;
+
+		this.onChangeCallback = opts.onChange;
+
 		this.editor = monaco.editor.create(elementRef, {
-			theme: "defaultLightTheme",
+			theme: initialTheme,
 			formatOnType: true,
-			value: code,
-			language: "GherkinLanguage-en",
+			value: initialCode,
+			language: initialLanguage,
+			readOnly: initialReadOnly,
 			acceptSuggestionOnEnter: "off",
+		});
+
+		this.editor.onDidChangeModelContent(() => {
+			const newValue = this.editor.getValue();
+			this.onChangeCallback?.(newValue);
 		});
 	}
 
@@ -275,10 +318,13 @@ export class Editor {
 		this.editor?.getAction("editor.action.formatDocument")?.run();
 	}
 
+	public setTheme(theme?: EditorTheme) {
+		const resolvedTheme = resolveTheme(theme);
+		monaco.editor.setTheme(resolvedTheme);
+	}
+
 	public updateTheme() {
-		this.editor.updateOptions({
-			theme: "defaultDarkTheme",
-		});
+		this.setTheme("defaultDarkTheme");
 	}
 
 	public getCode() {
@@ -290,6 +336,22 @@ export class Editor {
 		if (this.editor && this.editor.getValue() !== newCode) {
 			this.editor.setValue(newCode);
 		}
+	}
+
+	public setLanguage(language?: string) {
+		if (!this.editor) return;
+		const model = this.editor.getModel();
+		if (model) {
+			monaco.editor.setModelLanguage(model, language ?? "GherkinLanguage-en");
+		}
+	}
+
+	public setReadOnly(readOnly?: boolean) {
+		this.editor?.updateOptions({ readOnly: readOnly ?? false });
+	}
+
+	public setOnChange(callback?: (value: string) => void) {
+		this.onChangeCallback = callback;
 	}
 
 	public layout() {
