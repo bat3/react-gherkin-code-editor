@@ -1,9 +1,37 @@
-import { gherkinKeywords } from "./Gherkin";
+import {
+	type GherkinKeywords,
+	type SupportedLanguage,
+	combinedGherkinKeywords,
+	gherkinLanguages,
+} from "./Gherkin";
+
+export function getKeywordsForLanguage(
+	language?: string | SupportedLanguage,
+): GherkinKeywords {
+	if (!language) {
+		return combinedGherkinKeywords;
+	}
+
+	const langCode = language.startsWith("GherkinLanguage-")
+		? language.replace("GherkinLanguage-", "")
+		: language;
+
+	if (langCode in gherkinLanguages) {
+		return gherkinLanguages[langCode as SupportedLanguage];
+	}
+
+	return combinedGherkinKeywords;
+}
 
 /**
  * Formats an array of Gherkin strings with special handling for Examples tables.
  */
-export function formatGherkinLines(lines: string[]): string[] {
+export function formatGherkinLines(
+	lines: string[],
+	language?: string | SupportedLanguage,
+): string[] {
+	const keywords = getKeywordsForLanguage(language);
+
 	let inExamplesTable = false;
 	let inFeature = false;
 	let inRule = false;
@@ -24,64 +52,81 @@ export function formatGherkinLines(lines: string[]): string[] {
 		}
 
 		// New feature: reset context
-		if (gherkinKeywords.Feature.some((keyword) => line.startsWith(keyword))) {
+		if (keywords.Feature.some((keyword) => line.startsWith(keyword))) {
 			inFeature = true;
 			inRule = false;
 			inScenario = false;
 			formattedLines.push(
-				formatGherkinString(line, {
-					inFeature,
-					inRule,
-					inScenario,
-					inDocString,
-				}),
+				formatGherkinString(
+					line,
+					{
+						inFeature,
+						inRule,
+						inScenario,
+						inDocString,
+					},
+					keywords,
+				),
 			);
 			continue;
 		}
 
 		// Rule lines under a feature
-		if (gherkinKeywords.Rule.some((keyword) => line.startsWith(keyword))) {
+		if (keywords.Rule.some((keyword) => line.startsWith(keyword))) {
 			inRule = true;
 			inScenario = false;
 
 			formattedLines.push(
-				formatGherkinString(line, {
-					inFeature,
-					inRule,
-					inScenario,
-					inDocString,
-				}),
+				formatGherkinString(
+					line,
+					{
+						inFeature,
+						inRule,
+						inScenario,
+						inDocString,
+					},
+					keywords,
+				),
 			);
 			continue;
 		}
 
 		// Examples header starts a table block
-		if (gherkinKeywords.Examples.some((keyword) => line.startsWith(keyword))) {
+		if (keywords.Examples.some((keyword) => line.startsWith(keyword))) {
 			inExamplesTable = true;
 			formattedLines.push(
-				formatGherkinString(line, {
-					inFeature,
-					inRule,
-					inScenario,
-					inDocString,
-				}),
+				formatGherkinString(
+					line,
+					{
+						inFeature,
+						inRule,
+						inScenario,
+						inDocString,
+					},
+					keywords,
+				),
 			);
 			continue;
 		}
 
 		// Any scenario/example line marks that we're inside a scenario
 		if (
-			gherkinKeywords.Scenario.some((keyword) => line.startsWith(keyword)) ||
-			gherkinKeywords.Background.some((keyword) => line.startsWith(keyword))
+			keywords.Scenario.some((keyword) => line.startsWith(keyword)) ||
+			keywords.ScenarioOutline.some((keyword) => line.startsWith(keyword)) ||
+			keywords.Background.some((keyword) => line.startsWith(keyword))
 		) {
 			inScenario = true;
 			formattedLines.push(
-				formatGherkinString(line, {
-					inFeature,
-					inRule,
-					inScenario,
-					inDocString,
-				}),
+				formatGherkinString(
+					line,
+					{
+						inFeature,
+						inRule,
+						inScenario,
+						inDocString,
+					},
+					keywords,
+				),
 			);
 			continue;
 		}
@@ -89,12 +134,16 @@ export function formatGherkinLines(lines: string[]): string[] {
 		// Handle table rows inside an Examples block
 		if (inExamplesTable && line.includes("|")) {
 			examplesTableLines.push(
-				formatGherkinString(line, {
-					inFeature,
-					inRule,
-					inScenario,
-					inDocString,
-				}),
+				formatGherkinString(
+					line,
+					{
+						inFeature,
+						inRule,
+						inScenario,
+						inDocString,
+					},
+					keywords,
+				),
 			);
 
 			const isLastLine = i === lines.length - 1;
@@ -128,15 +177,19 @@ export function formatGherkinLines(lines: string[]): string[] {
 			// Normal non-table line (including doc strings)
 			// Pass current inDocString so formatGherkinString can indent correctly
 			formattedLines.push(
-				formatGherkinString(line, {
-					inFeature,
-					inRule,
-					inScenario,
-					inDocString,
-				}),
+				formatGherkinString(
+					line,
+					{
+						inFeature,
+						inRule,
+						inScenario,
+						inDocString,
+					},
+					keywords,
+				),
 			);
 
-			if (gherkinKeywords.DocString.some((keyword) => line === keyword)) {
+			if (keywords.DocString.some((keyword) => line === keyword)) {
 				inDocString = !inDocString;
 			}
 		}
@@ -213,11 +266,12 @@ interface GherkinContext {
 export function formatGherkinString(
 	line: string,
 	context: GherkinContext,
+	keywords: GherkinKeywords = combinedGherkinKeywords,
 ): string {
 	const trimmedLine = line.trimStart();
 
 	// Doc string delimiters and body: opening, content, and closing at step+1
-	if (gherkinKeywords.DocString.some((keyword) => trimmedLine === keyword)) {
+	if (keywords.DocString.some((keyword) => trimmedLine === keyword)) {
 		const baseIndent = baseIndentForSteps(context);
 		const indentLevel = baseIndent + 1;
 		return `${"\t".repeat(indentLevel)}${trimmedLine}`;
@@ -231,29 +285,30 @@ export function formatGherkinString(
 	}
 
 	// Feature
-	if (
-		gherkinKeywords.Feature.some((keyword) => trimmedLine.startsWith(keyword))
-	) {
+	if (keywords.Feature.some((keyword) => trimmedLine.startsWith(keyword))) {
 		return trimmedLine;
 	}
 
 	// Rule is always one level under Feature
-	if (gherkinKeywords.Rule.some((keyword) => trimmedLine.startsWith(keyword))) {
+	if (keywords.Rule.some((keyword) => trimmedLine.startsWith(keyword))) {
 		return `\t${trimmedLine}`;
+	}
+
+	// Examples headers keep previous behaviour
+	if (keywords.Examples.some((keyword) => trimmedLine.startsWith(keyword))) {
+		const baseIndent = baseIndentForSteps(context);
+		const indentLevel = baseIndent;
+		return `${"\t".repeat(indentLevel)}${trimmedLine}`;
 	}
 
 	// Scenario / Example / tags headers
 	if (
-		gherkinKeywords.Scenario.some((keyword) =>
+		keywords.Scenario.some((keyword) => trimmedLine.startsWith(keyword)) ||
+		keywords.ScenarioOutline.some((keyword) =>
 			trimmedLine.startsWith(keyword),
 		) ||
-		gherkinKeywords.ScenarioOutline.some((keyword) =>
-			trimmedLine.startsWith(keyword),
-		) ||
-		gherkinKeywords.Background.some((keyword) =>
-			trimmedLine.startsWith(keyword),
-		) ||
-		gherkinKeywords.Tag.some((keyword) => trimmedLine.startsWith(keyword))
+		keywords.Background.some((keyword) => trimmedLine.startsWith(keyword)) ||
+		keywords.Tag.some((keyword) => trimmedLine.startsWith(keyword))
 	) {
 		let indentLevel = 0;
 
@@ -266,22 +321,13 @@ export function formatGherkinString(
 		return `${"\t".repeat(indentLevel)}${trimmedLine}`;
 	}
 
-	// Examples headers keep previous behaviour
-	if (
-		gherkinKeywords.Examples.some((keyword) => trimmedLine.startsWith(keyword))
-	) {
-		const baseIndent = baseIndentForSteps(context);
-		const indentLevel = baseIndent;
-		return `${"\t".repeat(indentLevel)}${trimmedLine}`;
-	}
-
 	// Steps
 	if (
-		gherkinKeywords.Given.some((keyword) => trimmedLine.startsWith(keyword)) ||
-		gherkinKeywords.When.some((keyword) => trimmedLine.startsWith(keyword)) ||
-		gherkinKeywords.Then.some((keyword) => trimmedLine.startsWith(keyword)) ||
-		gherkinKeywords.And.some((keyword) => trimmedLine.startsWith(keyword)) ||
-		gherkinKeywords.But.some((keyword) => trimmedLine.startsWith(keyword))
+		keywords.Given.some((keyword) => trimmedLine.startsWith(keyword)) ||
+		keywords.When.some((keyword) => trimmedLine.startsWith(keyword)) ||
+		keywords.Then.some((keyword) => trimmedLine.startsWith(keyword)) ||
+		keywords.And.some((keyword) => trimmedLine.startsWith(keyword)) ||
+		keywords.But.some((keyword) => trimmedLine.startsWith(keyword))
 	) {
 		if (!context.inScenario) {
 			return trimmedLine;

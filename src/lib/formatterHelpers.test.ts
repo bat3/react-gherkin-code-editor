@@ -1,11 +1,25 @@
 import {
 	formatGherkinLines,
 	formatGherkinString,
+	getKeywordsForLanguage,
 	removeMultipleSpaces,
 } from "./formatterHelpers";
 
+describe("getKeywordsForLanguage", () => {
+	test("returns correct keywords for supported language codes", () => {
+		expect(getKeywordsForLanguage("fr").Feature).toContain("Fonctionnalité");
+		expect(getKeywordsForLanguage("es").Feature).toContain("Característica");
+		expect(getKeywordsForLanguage("GherkinLanguage-fr").Given).toContain(
+			"Etant donné",
+		);
+		expect(getKeywordsForLanguage("GherkinLanguage-es").Given).toContain(
+			"Dado",
+		);
+	});
+});
+
 describe("formatGherkinLines", () => {
-	test("should handle mixed content with tables", () => {
+	test("should handle mixed content with tables in English", () => {
 		const input = [
 			"Scenario Outline: Login test",
 			"    Given I am on login page",
@@ -26,7 +40,75 @@ describe("formatGherkinLines", () => {
 			"Scenario: Another test",
 		];
 
-		expect(formatGherkinLines(input)).toEqual(expected);
+		expect(formatGherkinLines(input, "en")).toEqual(expected);
+	});
+
+	test("should handle French feature formatting", () => {
+		const input = [
+			"Fonctionnalité: Calculatrice",
+			"  Calculatrice simple",
+			"",
+			"Scénario: Additionner deux nombres",
+			"Etant donné que j'ai saisi 50",
+			"  Et que j'ai saisi 70",
+			"Quand d'appuie sur ajouter",
+			"Alors le résultat doit être 120",
+			"",
+			"Exemples:",
+			"| Premier | Second | Résultat |",
+			"| 50 | 70 | 120 |",
+		];
+
+		const expected = [
+			"Fonctionnalité: Calculatrice",
+			"\tCalculatrice simple",
+			"",
+			"\tScénario: Additionner deux nombres",
+			"\t\tEtant donné que j'ai saisi 50",
+			"\t\tEt que j'ai saisi 70",
+			"\t\tQuand d'appuie sur ajouter",
+			"\t\tAlors le résultat doit être 120",
+			"",
+			"\t\tExemples:",
+			"\t\t\t| Premier | Second | Résultat |",
+			"\t\t\t| 50      | 70     | 120      |",
+		];
+
+		expect(formatGherkinLines(input, "fr")).toEqual(expected);
+	});
+
+	test("should handle Spanish feature formatting", () => {
+		const input = [
+			"Característica: Calculadora",
+			"  Calculadora simple",
+			"",
+			"Escenario: Sumar dos números",
+			"Dado que he ingresado 50",
+			"  Y que he ingresado 70",
+			"Cuando presiono sumar",
+			"Entonces el resultado debe ser 120",
+			"",
+			"Ejemplos:",
+			"| Primero | Segundo | Resultado |",
+			"| 50 | 70 | 120 |",
+		];
+
+		const expected = [
+			"Característica: Calculadora",
+			"\tCalculadora simple",
+			"",
+			"\tEscenario: Sumar dos números",
+			"\t\tDado que he ingresado 50",
+			"\t\tY que he ingresado 70",
+			"\t\tCuando presiono sumar",
+			"\t\tEntonces el resultado debe ser 120",
+			"",
+			"\t\tEjemplos:",
+			"\t\t\t| Primero | Segundo | Resultado |",
+			"\t\t\t| 50      | 70      | 120       |",
+		];
+
+		expect(formatGherkinLines(input, "es")).toEqual(expected);
 	});
 
 	test("should handle mixed content with tables qnd tags", () => {

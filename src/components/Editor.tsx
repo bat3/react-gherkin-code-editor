@@ -1,8 +1,9 @@
 import { type HTMLAttributes, forwardRef, useImperativeHandle } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Editor as EditorClass, type EditorTheme } from "../lib/Editor";
+import type { SupportedLanguage } from "../lib/Gherkin";
 
-export type { EditorTheme };
+export type { EditorTheme, SupportedLanguage };
 
 export interface EditorProps
 	extends Omit<HTMLAttributes<HTMLDivElement>, "onChange"> {
@@ -10,7 +11,7 @@ export interface EditorProps
 	value?: string;
 	onChange?: (value: string) => void;
 	theme?: EditorTheme;
-	language?: string;
+	language?: string | SupportedLanguage;
 	readOnly?: boolean;
 }
 

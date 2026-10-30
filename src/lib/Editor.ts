@@ -1,5 +1,6 @@
 import * as monaco2 from "monaco-editor";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+import { type SupportedLanguage, gherkinLanguages } from "./Gherkin";
 import { formatGherkinLines } from "./formatterHelpers";
 
 export type EditorTheme =
@@ -28,33 +29,77 @@ export function resolveTheme(theme?: EditorTheme): string {
 	return theme;
 }
 
+export function resolveLanguage(language?: string): string {
+	if (!language) return "GherkinLanguage-en";
+	if (language === "en" || language === "fr" || language === "es") {
+		return `GherkinLanguage-${language}`;
+	}
+	if (
+		language === "GherkinLanguage-en" ||
+		language === "GherkinLanguage-fr" ||
+		language === "GherkinLanguage-es"
+	) {
+		return language;
+	}
+	return language;
+}
+
 let isMonacoRegistered = false;
 
-function registerLanguages() {
-	// Register a new language
-	monaco.languages.register({ id: "GherkinLanguage-en" });
+function escapeRegex(str: string): string {
+	return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
-	// Register a tokens provider for the language
-	monaco.languages.setMonarchTokensProvider("GherkinLanguage-en", {
-		tokenizer: {
-			root: [
-				[/Feature:/, "primary-keyword"],
-				[/^\t* *@.*/, "secondary-keyword"],
-				[/Background:/, "primary-keyword"],
-				[/Scenario:/, "primary-keyword"],
-				[/Scenario Outline:/, "primary-keyword"],
-				[/Given( |$)/, "primary-keyword"],
-				[/When( |$)/, "primary-keyword"],
-				[/Then( |$)/, "primary-keyword"],
-				[/And( |$)/, "primary-keyword"],
-				[/\*( |$)/, "primary-keyword"],
-				[/<.*?>/, "primary-keyword"],
-				[/".*?"/, "primary-keyword"],
-				[/Examples:/, "primary-keyword"],
-				[/^\t* *\#.*/, "secondary-keyword"],
-			],
-		},
-	});
+function registerLanguages() {
+	const supportedLangs: SupportedLanguage[] = ["en", "fr", "es"];
+
+	for (const langCode of supportedLangs) {
+		const monacoLangId = `GherkinLanguage-${langCode}`;
+		const keywords = gherkinLanguages[langCode];
+
+		// Register a new language
+		monaco.languages.register({ id: monacoLangId });
+
+		const colonKeywords = [
+			...keywords.Feature,
+			...keywords.Background,
+			...keywords.Rule,
+			...keywords.Scenario,
+			...keywords.ScenarioOutline,
+			...keywords.Examples,
+		];
+
+		const stepKeywords = [
+			...keywords.Given,
+			...keywords.When,
+			...keywords.Then,
+			...keywords.And,
+			...keywords.But,
+		].filter((k) => k !== "*");
+
+		const colonPattern = new RegExp(
+			`(${colonKeywords.map(escapeRegex).join("|")}):`,
+		);
+
+		const stepPattern = new RegExp(
+			`(${stepKeywords.map(escapeRegex).join("|")})( |$)`,
+		);
+
+		// Register a tokens provider for the language
+		monaco.languages.setMonarchTokensProvider(monacoLangId, {
+			tokenizer: {
+				root: [
+					[colonPattern, "primary-keyword"],
+					[/^\t* *@.*/, "secondary-keyword"],
+					[stepPattern, "primary-keyword"],
+					[/\*( |$)/, "primary-keyword"],
+					[/<.*?>/, "primary-keyword"],
+					[/".*?"/, "primary-keyword"],
+					[/^\t* *\#.*/, "secondary-keyword"],
+				],
+			},
+		});
+	}
 }
 
 function defineThemes() {
@@ -101,130 +146,127 @@ function defineThemes() {
 }
 
 function addAutoComplete() {
-	function createDependencyProposals(range: {
-		startLineNumber: number;
-		endLineNumber: number;
-		startColumn: number;
-		endColumn: number;
-	}) {
-		return [
+	const supportedLangs: SupportedLanguage[] = ["en", "fr", "es"];
+
+	for (const langCode of supportedLangs) {
+		const monacoLangId = `GherkinLanguage-${langCode}`;
+		const keywords = gherkinLanguages[langCode];
+
+		const proposals = [
 			{
-				label: "Given",
+				label: keywords.Given[0],
 				kind: monaco.languages.CompletionItemKind.Keyword,
-				documentation: "Given step definition",
-				insertText: "Given ",
-				range: range,
+				documentation: `${keywords.Given[0]} step definition`,
+				insertText: `${keywords.Given[0]} `,
 			},
 			{
-				label: "When",
+				label: keywords.When[0],
 				kind: monaco.languages.CompletionItemKind.Keyword,
-				documentation: "When step definition",
-				insertText: "When ",
-				range: range,
+				documentation: `${keywords.When[0]} step definition`,
+				insertText: `${keywords.When[0]} `,
 			},
 			{
-				label: "Then",
+				label: keywords.Then[0],
 				kind: monaco.languages.CompletionItemKind.Keyword,
-				documentation: "Then step definition",
-				insertText: "Then ",
-				range: range,
+				documentation: `${keywords.Then[0]} step definition`,
+				insertText: `${keywords.Then[0]} `,
 			},
 			{
-				label: "And",
+				label: keywords.And[0],
 				kind: monaco.languages.CompletionItemKind.Keyword,
-				documentation: "And step definition",
-				insertText: "And ",
-				range: range,
+				documentation: `${keywords.And[0]} step definition`,
+				insertText: `${keywords.And[0]} `,
 			},
 			{
-				label: "Feature",
+				label: keywords.Feature[0],
 				kind: monaco.languages.CompletionItemKind.Keyword,
-				documentation: "Feature description",
-				insertText: "Feature: ",
-				range: range,
+				documentation: `${keywords.Feature[0]} description`,
+				insertText: `${keywords.Feature[0]}: `,
 			},
 			{
-				label: "Scenario",
+				label: keywords.Scenario[0],
 				kind: monaco.languages.CompletionItemKind.Keyword,
-				documentation: "Scenario description",
-				insertText: "Scenario: ",
-				range: range,
+				documentation: `${keywords.Scenario[0]} description`,
+				insertText: `${keywords.Scenario[0]}: `,
 			},
 			{
-				label: "Scenario Outline",
+				label: keywords.ScenarioOutline[0],
 				kind: monaco.languages.CompletionItemKind.Keyword,
-				documentation: "Scenario Outline description",
-				insertText: "Scenario Outline: ",
-				range: range,
+				documentation: `${keywords.ScenarioOutline[0]} description`,
+				insertText: `${keywords.ScenarioOutline[0]}: `,
 			},
 			{
-				label: "Examples",
+				label: keywords.Examples[0],
 				kind: monaco.languages.CompletionItemKind.Keyword,
-				documentation: "Examples table",
-				insertText: "Examples:\n",
-				range: range,
+				documentation: `${keywords.Examples[0]} table`,
+				insertText: `${keywords.Examples[0]}:\n`,
 			},
 		];
-	}
 
-	monaco.languages.registerCompletionItemProvider("GherkinLanguage-en", {
-		provideCompletionItems: (model, position) => {
-			const word = model.getWordUntilPosition(position);
-			const range = {
-				startLineNumber: position.lineNumber,
-				endLineNumber: position.lineNumber,
-				startColumn: word.startColumn,
-				endColumn: word.endColumn,
-			};
+		monaco.languages.registerCompletionItemProvider(monacoLangId, {
+			provideCompletionItems: (model, position) => {
+				const word = model.getWordUntilPosition(position);
+				const range = {
+					startLineNumber: position.lineNumber,
+					endLineNumber: position.lineNumber,
+					startColumn: word.startColumn,
+					endColumn: word.endColumn,
+				};
 
-			// Get all words from the current document
-			const text = model.getValue();
-			const wordRegex = /\b\w+\b/g;
-			const words = new Set<string>();
-			let match: RegExpExecArray | null;
-			match = wordRegex.exec(text);
-			while (match !== null) {
-				words.add(match[0]);
+				const dependencySuggestions = proposals.map((p) => ({
+					...p,
+					range,
+				}));
+
+				// Get all words from the current document
+				const text = model.getValue();
+				const wordRegex = /\b\w+\b/g;
+				const words = new Set<string>();
+				let match: RegExpExecArray | null;
 				match = wordRegex.exec(text);
-			}
+				while (match !== null) {
+					words.add(match[0]);
+					match = wordRegex.exec(text);
+				}
 
-			// Get all lines from the current document
-			const lines = model.getLinesContent();
-			const lineSuggestions = lines
-				.filter((line) => line.trim().length > 0) // Filter out empty lines
-				.map((line) => ({
-					label: line,
-					kind: monaco.languages.CompletionItemKind.Snippet,
-					documentation: "Reuse existing line",
-					insertText: line,
+				// Get all lines from the current document
+				const lines = model.getLinesContent();
+				const lineSuggestions = lines
+					.filter((line) => line.trim().length > 0) // Filter out empty lines
+					.map((line) => ({
+						label: line,
+						kind: monaco.languages.CompletionItemKind.Snippet,
+						documentation: "Reuse existing line",
+						insertText: line,
+						range: range,
+					}));
+
+				// Create word suggestions
+				const wordSuggestions = Array.from(words).map((word) => ({
+					label: word,
+					kind: monaco.languages.CompletionItemKind.Text,
+					insertText: word,
 					range: range,
 				}));
 
-			// Create word suggestions
-			const wordSuggestions = Array.from(words).map((word) => ({
-				label: word,
-				kind: monaco.languages.CompletionItemKind.Text,
-				insertText: word,
-				range: range,
-			}));
-
-			// Combine all suggestions
-			return {
-				suggestions: [
-					...createDependencyProposals(range),
-					...lineSuggestions,
-					...wordSuggestions,
-				],
-			};
-		},
-	});
+				return {
+					suggestions: [
+						...dependencySuggestions,
+						...lineSuggestions,
+						...wordSuggestions,
+					],
+				};
+			},
+		});
+	}
 }
 
 function registerFormatters() {
 	function formatMySpecialLanguage(model: monaco.editor.ITextModel) {
+		const langId = model.getLanguageId();
 		// Get all lines from the editor
 		const linesContent = model.getLinesContent();
-		const formattedLines = formatGherkinLines(linesContent);
+		const formattedLines = formatGherkinLines(linesContent, langId);
 
 		// Find the line with the maximum column count
 		let maxColumnLineNumber = 0;
@@ -252,19 +294,22 @@ function registerFormatters() {
 		];
 	}
 
-	// Register formatter of gherkin on specific char
-	monaco.languages.registerDocumentFormattingEditProvider(
-		"GherkinLanguage-en",
-		{
-			provideDocumentFormattingEdits: formatMySpecialLanguage,
-		},
-	);
+	const supportedLangs: SupportedLanguage[] = ["en", "fr", "es"];
 
-	// Register formatter of gherkin
-	monaco.languages.registerOnTypeFormattingEditProvider("GherkinLanguage-en", {
-		autoFormatTriggerCharacters: ["|"],
-		provideOnTypeFormattingEdits: formatMySpecialLanguage,
-	});
+	for (const langCode of supportedLangs) {
+		const monacoLangId = `GherkinLanguage-${langCode}`;
+
+		// Register formatter of gherkin on specific char
+		monaco.languages.registerDocumentFormattingEditProvider(monacoLangId, {
+			provideDocumentFormattingEdits: formatMySpecialLanguage,
+		});
+
+		// Register formatter of gherkin
+		monaco.languages.registerOnTypeFormattingEditProvider(monacoLangId, {
+			autoFormatTriggerCharacters: ["|"],
+			provideOnTypeFormattingEdits: formatMySpecialLanguage,
+		});
+	}
 }
 
 export function ensureMonacoGherkinRegistered() {
@@ -290,7 +335,7 @@ export class Editor {
 
 		const initialCode = opts.value ?? opts.code ?? "";
 		const initialTheme = resolveTheme(opts.theme);
-		const initialLanguage = opts.language ?? "GherkinLanguage-en";
+		const initialLanguage = resolveLanguage(opts.language);
 		const initialReadOnly = opts.readOnly ?? false;
 
 		this.onChangeCallback = opts.onChange;
@@ -342,7 +387,7 @@ export class Editor {
 		if (!this.editor) return;
 		const model = this.editor.getModel();
 		if (model) {
-			monaco.editor.setModelLanguage(model, language ?? "GherkinLanguage-en");
+			monaco.editor.setModelLanguage(model, resolveLanguage(language));
 		}
 	}
 

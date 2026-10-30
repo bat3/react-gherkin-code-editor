@@ -1,5 +1,10 @@
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-import { Editor, ensureMonacoGherkinRegistered, resolveTheme } from "./Editor";
+import {
+	Editor,
+	ensureMonacoGherkinRegistered,
+	resolveLanguage,
+	resolveTheme,
+} from "./Editor";
 
 let onDidChangeModelContentListener: (() => void) | null = null;
 let currentModelLanguage = "GherkinLanguage-en";
@@ -68,6 +73,16 @@ describe("resolveTheme function", () => {
 	});
 });
 
+describe("resolveLanguage function", () => {
+	test("resolves shorthand language codes and full language IDs", () => {
+		expect(resolveLanguage("en")).toBe("GherkinLanguage-en");
+		expect(resolveLanguage("fr")).toBe("GherkinLanguage-fr");
+		expect(resolveLanguage("es")).toBe("GherkinLanguage-es");
+		expect(resolveLanguage("GherkinLanguage-fr")).toBe("GherkinLanguage-fr");
+		expect(resolveLanguage(undefined)).toBe("GherkinLanguage-en");
+	});
+});
+
 describe("Editor class", () => {
 	let container: HTMLDivElement;
 
@@ -78,26 +93,33 @@ describe("Editor class", () => {
 		currentModelLanguage = "GherkinLanguage-en";
 	});
 
-	test("ensureMonacoGherkinRegistered should register languages, themes, providers idempotently", () => {
+	test("ensureMonacoGherkinRegistered should register languages, themes, providers idempotently for en, fr, es", () => {
 		ensureMonacoGherkinRegistered();
 		ensureMonacoGherkinRegistered();
 
-		// Should only register once globally
-		expect(monaco.languages.register).toHaveBeenCalledTimes(1);
+		// Should register 3 languages: GherkinLanguage-en, GherkinLanguage-fr, GherkinLanguage-es
+		expect(monaco.languages.register).toHaveBeenCalledTimes(3);
 		expect(monaco.languages.register).toHaveBeenCalledWith({
 			id: "GherkinLanguage-en",
 		});
-		expect(monaco.languages.setMonarchTokensProvider).toHaveBeenCalledTimes(1);
+		expect(monaco.languages.register).toHaveBeenCalledWith({
+			id: "GherkinLanguage-fr",
+		});
+		expect(monaco.languages.register).toHaveBeenCalledWith({
+			id: "GherkinLanguage-es",
+		});
+
+		expect(monaco.languages.setMonarchTokensProvider).toHaveBeenCalledTimes(3);
 		expect(monaco.editor.defineTheme).toHaveBeenCalledTimes(2); // defaultLightTheme, defaultDarkTheme
 		expect(
 			monaco.languages.registerCompletionItemProvider,
-		).toHaveBeenCalledTimes(1);
+		).toHaveBeenCalledTimes(3);
 		expect(
 			monaco.languages.registerDocumentFormattingEditProvider,
-		).toHaveBeenCalledTimes(1);
+		).toHaveBeenCalledTimes(3);
 		expect(
 			monaco.languages.registerOnTypeFormattingEditProvider,
-		).toHaveBeenCalledTimes(1);
+		).toHaveBeenCalledTimes(3);
 	});
 
 	test("Editor constructor initializes Monaco editor with code and options", () => {
@@ -105,7 +127,7 @@ describe("Editor class", () => {
 			code: "Feature: Test",
 			theme: "dark",
 			readOnly: true,
-			language: "GherkinLanguage-en",
+			language: "fr",
 		});
 
 		expect(monaco.editor.create).toHaveBeenCalledWith(
@@ -113,7 +135,7 @@ describe("Editor class", () => {
 			expect.objectContaining({
 				value: "Feature: Test",
 				theme: "defaultDarkTheme",
-				language: "GherkinLanguage-en",
+				language: "GherkinLanguage-fr",
 				readOnly: true,
 			}),
 		);
@@ -176,12 +198,12 @@ describe("Editor class", () => {
 		});
 	});
 
-	test("setLanguage sets model language", () => {
+	test("setLanguage sets model language to resolved language ID", () => {
 		const editor = new Editor(container);
-		editor.setLanguage("custom-language");
+		editor.setLanguage("es");
 		expect(monaco.editor.setModelLanguage).toHaveBeenCalledWith(
 			expect.anything(),
-			"custom-language",
+			"GherkinLanguage-es",
 		);
 	});
 

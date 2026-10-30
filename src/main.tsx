@@ -4,6 +4,7 @@ import {
 	Editor,
 	type EditorExposeMethods,
 	type EditorTheme,
+	type SupportedLanguage,
 } from "./components/Editor";
 
 // Monaco web workers wiring for Vite
@@ -31,43 +32,115 @@ type MonacoEnvironmentType = {
 	},
 };
 
-const defaultGherkin = [
-	"# language: en",
-	"Feature: Calculator",
-	"",
-	"Simple calculator for adding two numbers",
-	"",
-	"@mytag",
-	"Scenario: Add two numbers",
-	"Given I have entered 50 into the calculator",
-	"And I have entered 70 into the calculator",
-	'When I press "add"',
-	"Then the result should be 120 on the screen",
-	"",
-	"@mytag",
-	"Scenario Outline: Add two numbers",
-	"Given I have entered <First> in the calculator",
-	"And I have entered <Second> into the calculator",
-	'When I press "add"',
-	"Then the result should be <Result> on the screen",
-	"",
-	"Examples:",
-	"  |   First    |  Second |   Result |",
-	"  | 50    | 70     | 120    |",
-	"  | 30    | 40     | 70     |",
-	"  | 60    | 30     | 90     |",
-].join("\n");
+const gherkinDemos: Record<SupportedLanguage, string> = {
+	en: [
+		"# language: en",
+		"Feature: Calculator",
+		"",
+		"Simple calculator for adding two numbers",
+		"",
+		"@mytag",
+		"Scenario: Add two numbers",
+		"Given I have entered 50 into the calculator",
+		"And I have entered 70 into the calculator",
+		'When I press "add"',
+		"Then the result should be 120 on the screen",
+		"",
+		"@mytag",
+		"Scenario Outline: Add two numbers",
+		"Given I have entered <First> in the calculator",
+		"And I have entered <Second> into the calculator",
+		'When I press "add"',
+		"Then the result should be <Result> on the screen",
+		"",
+		"Examples:",
+		"  |   First    |  Second |   Result |",
+		"  | 50    | 70     | 120    |",
+		"  | 30    | 40     | 70     |",
+		"  | 60    | 30     | 90     |",
+	].join("\n"),
+	fr: [
+		"# language: fr",
+		"Fonctionnalité: Calculatrice",
+		"",
+		"Calculatrice simple pour additionner deux nombres",
+		"",
+		"@mytag",
+		"Scénario: Additionner deux nombres",
+		"Etant donné que j'ai saisi 50 dans la calculatrice",
+		"Et que j'ai saisi 70 dans la calculatrice",
+		'Quand j\'appuie sur "ajouter"',
+		"Alors le résultat doit être 120 à l'écran",
+		"",
+		"Plan du scénario: Additionner deux nombres",
+		"Etant donné que j'ai saisi <Premier> dans la calculatrice",
+		"Et que j'ai saisi <Second> dans la calculatrice",
+		'Quand j\'appuie sur "ajouter"',
+		"Alors le résultat doit être <Résultat> à l'écran",
+		"",
+		"Exemples:",
+		"  |   Premier    |  Second |   Résultat |",
+		"  | 50    | 70     | 120    |",
+		"  | 30    | 40     | 70     |",
+	].join("\n"),
+	es: [
+		"# language: es",
+		"Característica: Calculadora",
+		"",
+		"Calculadora simple para sumar dos números",
+		"",
+		"@mytag",
+		"Escenario: Sumar dos números",
+		"Dado que he ingresado 50 en la calculadora",
+		"Y que he ingresado 70 en la calculadora",
+		'Cuando presiono "sumar"',
+		"Entonces el resultado debe ser 120 en la pantalla",
+		"",
+		"Esquema del escenario: Sumar dos números",
+		"Dado que he ingresado <Primero> en la calculadora",
+		"Y que he ingresado <Segundo> en la calculadora",
+		'Cuando presiono "sumar"',
+		"Entonces el resultado debe ser <Resultado> en la pantalla",
+		"",
+		"Ejemplos:",
+		"  |   Primero    |  Second |   Resultado |",
+		"  | 50    | 70     | 120    |",
+		"  | 30    | 40     | 70     |",
+	].join("\n"),
+};
 
 const Page = () => {
 	const editorRef = useRef<EditorExposeMethods>(null);
 	const [isBig, setIsBig] = useState<boolean>(true);
-	const [editorContent, setEditorContent] = useState<string>(defaultGherkin);
+	const [selectedLanguage, setSelectedLanguage] =
+		useState<SupportedLanguage>("en");
+	const [editorContent, setEditorContent] = useState<string>(gherkinDemos.en);
 	const [editorTheme, setEditorTheme] = useState<EditorTheme>("light");
 	const [isReadOnly, setIsReadOnly] = useState<boolean>(false);
+
+	const handleLanguageChange = (lang: SupportedLanguage) => {
+		setSelectedLanguage(lang);
+		setEditorContent(gherkinDemos[lang]);
+	};
 
 	return (
 		<main style={{ height: "70vh" }}>
 			<h3>Give me a Gherkin</h3>
+			<div style={{ marginBottom: "10px" }}>
+				<label htmlFor="language-select">Language: </label>
+				<select
+					id="language-select"
+					data-testid="language-select"
+					value={selectedLanguage}
+					onChange={(e) =>
+						handleLanguageChange(e.target.value as SupportedLanguage)
+					}
+				>
+					<option value="en">English (en)</option>
+					<option value="fr">French (fr)</option>
+					<option value="es">Spanish (es)</option>
+				</select>
+			</div>
 			<Editor
 				data-testid="gherkin-editor"
 				style={{
@@ -78,6 +151,7 @@ const Page = () => {
 				ref={editorRef}
 				value={editorContent}
 				onChange={(newVal) => setEditorContent(newVal)}
+				language={selectedLanguage}
 				theme={editorTheme}
 				readOnly={isReadOnly}
 			/>
